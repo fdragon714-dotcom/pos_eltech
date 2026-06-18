@@ -1,0 +1,627 @@
+{% extends "posApp/base.html" %} 
+{% load humanize %} 
+{% block pageContent %}
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<style>
+    /* ============================================================
+       1. TEMA iOS 26 SPATIAL GLASS LIQUID (VARIABLES) 
+       ============================================================ */
+    :root {
+        /* Liquid Animated Background Colors */
+        --mesh-1: #d8b4fe;
+        --mesh-2: #bae6fd;
+        --mesh-3: #fbcfe8;
+        --mesh-4: #c4b5fd;
+
+        /* Glassmorphism Variables */
+        --glass-surface: rgba(255, 255, 255, 0.45);
+        --glass-surface-hover: rgba(255, 255, 255, 0.65);
+        --glass-inset: rgba(255, 255, 255, 0.3);
+        --glass-border: rgba(255, 255, 255, 0.7);
+        --glass-border-light: rgba(255, 255, 255, 0.4);
+        --glass-shadow: 0 10px 40px -10px rgba(31, 38, 135, 0.15);
+        --glass-blur: blur(20px) saturate(160%);
+
+        /* iOS Semantic Colors */
+        --c-dark: #1d1d1f;
+        --c-text-muted: #515154;
+        --c-blue: #007AFF;
+        --c-blue-glow: rgba(0, 122, 255, 0.3);
+        --c-green: #34C759;
+        --c-red: #FF3B30;
+        --c-orange: #FF9500; 
+    }
+
+    /* ANIMATED LIQUID BACKGROUND */
+    body { 
+        font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; 
+        background: linear-gradient(-45deg, var(--mesh-1), var(--mesh-2), var(--mesh-3), var(--mesh-4));
+        background-size: 300% 300%;
+        animation: liquidFlow 15s ease infinite;
+        background-attachment: fixed;
+        color: var(--c-dark);
+        -webkit-font-smoothing: antialiased;
+    }
+
+    @keyframes liquidFlow {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    /* Class Bantuan untuk Efek Kaca */
+    .glass-panel {
+        background: var(--glass-surface);
+        backdrop-filter: var(--glass-blur);
+        -webkit-backdrop-filter: var(--glass-blur);
+        border: 1px solid var(--glass-border);
+        box-shadow: var(--glass-shadow);
+    }
+
+    /* --- 2. HEADER KACA --- */
+    .dashboard-header {
+        border-radius: 24px;
+        padding: 24px 28px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        background: var(--glass-surface);
+        backdrop-filter: var(--glass-blur);
+        -webkit-backdrop-filter: var(--glass-blur);
+        border: 1px solid var(--glass-border);
+        box-shadow: var(--glass-shadow);
+    }
+
+    .dashboard-header h4 { font-weight: 800; color: var(--c-dark); margin: 0 0 4px 0; letter-spacing: -0.5px;}
+    .dashboard-header p { font-size: 0.9rem; color: var(--c-text-muted); font-weight: 500; margin: 0; }
+
+    .btn-add-primary {
+        background: rgba(255, 255, 255, 0.8); color: var(--c-blue); 
+        border: 1px solid #ffffff; padding: 12px 24px; border-radius: 30px; 
+        font-weight: 700; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px; 
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        box-shadow: 0 4px 15px var(--c-blue-glow);
+    }
+    .btn-add-primary:hover { 
+        background: var(--c-blue); color: white; border-color: var(--c-blue);
+        transform: translateY(-2px) scale(1.02); 
+        box-shadow: 0 8px 25px var(--c-blue-glow); 
+    }
+
+    /* --- 3. FILTER BAR LIQUID --- */
+    .filter-section {
+        border-radius: 24px; padding: 24px; margin-bottom: 30px; position: relative; overflow: hidden;
+        background: var(--glass-surface); backdrop-filter: var(--glass-blur);
+        -webkit-backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border);
+        box-shadow: var(--glass-shadow);
+    }
+    
+    .filter-section::before {
+        content: ''; position: absolute; top: 0; left: 0; width: 6px; height: 100%; 
+        background: linear-gradient(to bottom, var(--c-blue), #8ec5fc);
+    }
+    
+    .filter-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .filter-title { font-size: 0.95rem; font-weight: 800; color: var(--c-dark); display: flex; align-items: center; gap: 8px; margin: 0; }
+
+    .btn-reset-filter {
+        background: rgba(255, 59, 48, 0.15); color: var(--c-red); border: 1px solid rgba(255, 59, 48, 0.3); 
+        padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; cursor: pointer; 
+        transition: all 0.3s ease; display: flex; align-items: center; gap: 4px;
+        opacity: 0; visibility: hidden; 
+    }
+    .btn-reset-filter.active { opacity: 1; visibility: visible; }
+    .btn-reset-filter:hover { background: var(--c-red); color: white; transform: scale(1.05); }
+
+    .filter-controls { display: grid; grid-template-columns: 2fr 1.2fr 1.2fr 1.2fr; gap: 16px; }
+    @media (max-width: 1200px) { .filter-controls { grid-template-columns: 1fr 1fr; } .search-group { grid-column: 1 / -1; } }
+    @media (max-width: 576px) { .filter-controls { grid-template-columns: 1fr; } }
+
+    .filter-group {
+        position: relative; display: flex; align-items: center; 
+        background: rgba(255, 255, 255, 0.4); border: 1px solid var(--glass-border); 
+        border-radius: 16px; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+    .filter-group:focus-within {
+        background: rgba(255, 255, 255, 0.8); border-color: var(--c-blue); 
+        box-shadow: 0 0 0 4px var(--c-blue-glow); transform: scale(1.01);
+    }
+    
+    .filter-group > i.icon-prefix { position: absolute; left: 16px; color: var(--c-text-muted); font-size: 22px; pointer-events: none; transition: 0.3s; }
+    .filter-group:focus-within > i.icon-prefix { color: var(--c-blue); }
+
+    .filter-group input, .filter-group select {
+        width: 100%; border: none; background: transparent; padding: 14px 16px 14px 48px; 
+        font-size: 0.95rem; color: var(--c-dark); font-weight: 600; outline: none; appearance: none; text-overflow: ellipsis;
+    }
+    .filter-group select { cursor: pointer; }
+    
+    .category-group::after {
+        content: '\e313'; font-family: 'Material Icons'; position: absolute; right: 16px; 
+        color: var(--c-text-muted); font-size: 20px; pointer-events: none;
+    }
+
+    .filter-group select option {
+        background-color: #ffffff; color: var(--c-dark); padding: 12px 15px; font-weight: 600; font-size: 0.95rem;
+    }
+
+    /* --- 4. GRID & KARTU PRODUK KACA --- */
+    .catalog-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 24px; width: 100%; padding-bottom: 40px; }
+
+    .catalog-card {
+        border-radius: 24px; overflow: hidden; display: flex; flex-direction: column; position: relative;
+        transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        background: var(--glass-surface); backdrop-filter: var(--glass-blur);
+        -webkit-backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border);
+        box-shadow: var(--glass-shadow);
+    }
+    .catalog-card:hover { 
+        transform: translateY(-8px) scale(1.02); 
+        box-shadow: 0 20px 40px -10px rgba(0,0,0,0.15), 0 0 20px rgba(255,255,255,0.5); 
+        background: var(--glass-surface-hover); border-color: #ffffff;
+    }
+    .catalog-card.inactive { opacity: 0.7; filter: grayscale(50%); backdrop-filter: blur(10px); }
+    .catalog-card.inactive:hover { opacity: 1; filter: grayscale(0%); }
+
+    .card-img-wrap {
+        position: relative; width: 100%; height: 200px; background: rgba(255,255,255,0.2); 
+        border-bottom: 1px solid var(--glass-border-light); overflow: hidden; display: flex; 
+        align-items: center; justify-content: center; cursor: pointer; 
+    }
+    .card-img-wrap img { width: 100%; height: 100%; object-fit: contain; padding: 15px; transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1); filter: drop-shadow(0 10px 15px rgba(0,0,0,0.1));}
+    .catalog-card:hover .card-img-wrap img { transform: scale(1.1); }
+
+    .img-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--c-text-muted); width: 100%; height: 100%; }
+    .img-placeholder i { font-size: 48px; margin-bottom: 5px; opacity: 0.4; }
+
+    .status-floating {
+        position: absolute; top: 12px; right: 12px; padding: 6px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 800;
+        z-index: 2; text-transform: uppercase; letter-spacing: 0.5px; 
+        backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.5);
+    }
+    .status-floating.st-active { background: rgba(255,255,255,0.8); color: var(--c-green); box-shadow: 0 4px 10px rgba(52, 199, 89, 0.2); }
+    .status-floating.st-inactive { background: rgba(29, 29, 31, 0.7); color: #ffffff; }
+
+    /* --- 5. INFO PRODUK --- */
+    .card-body { padding: 20px; display: flex; flex-direction: column; flex-grow: 1; }
+    .card-category { font-size: 0.75rem; font-weight: 800; color: var(--c-blue); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .card-title-text { font-size: 1.1rem; font-weight: 800; color: var(--c-dark); margin: 0 0 6px 0; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .card-sku { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; font-weight: 700; color: var(--c-text-muted); margin-bottom: 12px; background: rgba(255,255,255,0.5); padding: 4px 8px; border-radius: 6px; display: inline-block; width: fit-content;}
+    .card-desc { font-size: 0.85rem; color: var(--c-text-muted); line-height: 1.5; margin: 0 0 16px 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; flex-grow: 1; font-weight: 500;}
+
+    .card-price-stock { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding-top: 16px; border-top: 1px solid var(--glass-border-light); }
+    .card-price { font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; font-weight: 800; color: var(--c-dark); text-shadow: 0 2px 10px rgba(255,255,255,0.5);}
+    
+    .stock-badge { padding: 6px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap; border: 1px solid rgba(255,255,255,0.5); backdrop-filter: blur(5px);}
+    .stock-badge i { font-size: 16px; }
+    .stock-good { background: rgba(52, 199, 89, 0.15); color: var(--c-green); }
+    .stock-low { background: rgba(255, 149, 0, 0.15); color: var(--c-orange); }
+    .stock-out { background: rgba(255, 59, 48, 0.15); color: var(--c-red); }
+
+    .warranty-badge { font-size: 0.75rem; font-weight: 800; background: rgba(255,255,255,0.6); color: var(--c-dark); padding: 6px 10px; border-radius: 12px; display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--glass-border); white-space: nowrap;}
+    .warranty-badge i { font-size: 16px; color: var(--c-blue);}
+
+    /* --- 6. TOMBOL AKSI BAWAH --- */
+    .card-actions { display: flex; padding: 0 20px 20px 20px; gap: 10px; }
+    .btn-action-katalog { 
+        flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; 
+        padding: 10px 0; border-radius: 12px; font-weight: 700; font-size: 0.85rem; 
+        transition: all 0.3s ease; cursor: pointer; 
+        background: rgba(255,255,255,0.5); border: 1px solid var(--glass-border); backdrop-filter: blur(10px);
+    }
+    .btn-edit { color: var(--c-blue); }
+    .btn-edit:hover { background: var(--c-blue); color: white; transform: scale(1.05); box-shadow: 0 5px 15px var(--c-blue-glow);}
+    .btn-del { color: var(--c-red); }
+    .btn-del:hover { background: var(--c-red); color: white; transform: scale(1.05); box-shadow: 0 5px 15px rgba(255,59,48,0.3);}
+    
+    .empty-state { 
+        grid-column: 1 / -1; text-align: center; padding: 80px 20px; 
+        background: var(--glass-surface); backdrop-filter: var(--glass-blur);
+        border-radius: 24px; border: 2px dashed rgba(255,255,255,0.8); box-shadow: var(--glass-shadow);
+    }
+
+    /* Sweetalert Styling menggunakan Global dari base.html */
+</style>
+
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+    <div class="w-100">
+        
+        <div class="dashboard-header">
+            <div>
+                <h4>Katalog Produk</h4>
+            </div>
+            
+            {% if request.user.is_superuser %}
+            <div>
+                <button class="btn-add-primary" id="create_new">
+                    <i class="material-icons" style="font-size: 20px;">add_circle</i> Tambah Produk
+                </button>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="filter-section">
+            <div class="filter-header">
+                <p class="filter-title"><i class="material-icons" style="font-size: 20px; color: var(--c-blue);">tune</i> Filter & Pencarian</p>
+                <button type="button" class="btn-reset-filter" id="btn_reset_filter">
+                    <i class="material-icons" style="font-size: 16px;">close</i> Reset
+                </button>
+            </div>
+
+            <div class="filter-controls">
+                <div class="filter-group search-group">
+                    <i class="material-icons icon-prefix">search</i>
+                    <input type="text" id="search_product" placeholder="Ketik SKU, Merek, atau Tipe..." autocomplete="off">
+                </div>
+                
+                <div class="filter-group category-group">
+                    <i class="material-icons icon-prefix">category</i>
+                    <select id="filter_category">
+                        <option value="all">Semua Merek</option>
+                    </select>
+                </div>
+
+                <div class="filter-group category-group">
+                    <i class="material-icons icon-prefix">devices</i>
+                    <select id="filter_type">
+                        <option value="all">Semua Tipe</option>
+                    </select>
+                </div>
+
+                <div class="filter-group category-group">
+                    <i class="material-icons icon-prefix">sort</i>
+                    <select id="sort_price">
+                        <option value="default">Urutkan: Default</option>
+                        <option value="highest">Harga Tertinggi</option>
+                        <option value="lowest">Harga Terendah</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="catalog-grid" id="product_catalog_container">
+            {% for product in products %}
+            <div class="catalog-card {% if product.status == 0 %}inactive{% endif %}" data-price="{{ product.price }}" data-original-index="{{ forloop.index }}">
+                
+                <div class="card-img-wrap detail-trigger" title="Klik untuk melihat detail" data-warranty="{% if product.warranty and product.warranty > 0 %}{{ product.warranty }} Hari{% else %}Non-Garansi{% endif %}">
+                    <div class="status-floating {% if product.status == 1 %}st-active{% else %}st-inactive{% endif %}">
+                        {% if product.status == 1 %}Aktif{% else %}Arsip{% endif %}
+                    </div>
+
+                    {% if product.image %}
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                    {% else %}
+                        <div class="img-placeholder">
+                            <i class="material-icons">image_not_supported</i>
+                            <span style="font-size: 0.8rem; font-weight: 700;">Tanpa Foto</span>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="card-body">
+                    <div class="card-category">{% if product.category_id %}{{ product.category_id.name|default:product.category_id }}{% else %}Tanpa Merek{% endif %}</div>
+                    <h5 class="card-title-text" title="{{ product.name }}">{{ product.name }}</h5>
+                    <div class="card-sku">SKU: {{ product.code }}</div>
+                    
+                    <p class="card-desc" title="{{ product.description }}">
+                        {{ product.description|default:"Tidak ada deskripsi." }}
+                    </p>
+
+                    <div class="card-price-stock">
+                        <div class="d-flex justify-content-between align-items-center w-100 mb-1">
+                            <div class="warranty-badge">
+                                <i class="material-icons">verified_user</i> 
+                                {% if product.warranty and product.warranty > 0 %}{{ product.warranty }} Hari{% else %}Non-Garansi{% endif %}
+                            </div>
+
+                            <div class="stock-badge 
+                                {% if product.stock > 10 %} stock-good 
+                                {% elif product.stock > 0 %} stock-low 
+                                {% else %} stock-out {% endif %}">
+                                
+                                {% if product.stock > 10 %}
+                                    <i class="material-icons">check_circle</i>
+                                    <span>Aman: {{ product.stock }}</span>
+                                {% elif product.stock > 0 %}
+                                    <i class="material-icons">warning</i>
+                                    <span>Sisa {{ product.stock }}</span>
+                                {% else %}
+                                    <i class="material-icons">error</i>
+                                    <span>Habis</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="card-price">Rp {{ product.price|floatformat:"0"|intcomma }}</div>
+                    </div>
+                </div>
+
+                {% if request.user.is_superuser %}
+                <div class="card-actions">
+                    <button class="btn-action-katalog btn-edit edit-data" data-id="{{ product.pk }}">
+                        <i class="material-icons" style="font-size: 18px;">edit</i> Edit
+                    </button>
+                    <button class="btn-action-katalog btn-del delete-data" data-id="{{ product.pk }}" data-code="{{ product.code }}">
+                        <i class="material-icons" style="font-size: 18px;">delete</i> Hapus
+                    </button>
+                </div>
+                {% else %}
+                <div style="padding-bottom: 20px;"></div>
+                {% endif %}
+                
+            </div>
+            {% empty %}
+            <div class="empty-state">
+                <i class="material-icons" style="font-size: 72px; color: rgba(29, 29, 31, 0.2); margin-bottom: 16px;">view_in_ar</i>
+                <h4 class="fw-bold text-dark mb-2" style="font-size:1.4rem;">Etalase Kosong</h4>
+                <p class="text-muted mb-4" style="font-weight:500;">Sistem belum mendeteksi adanya data produk di gudang Anda.</p>
+                
+                {% if request.user.is_superuser %}
+                <button class="btn-add-primary" onclick="$('#create_new').click()">
+                    <i class="material-icons">add_circle</i> Mulai Tambah Produk
+                </button>
+                {% endif %}
+            </div>
+            {% endfor %}
+            
+            <div id="no_result_msg" class="empty-state" style="display: none; grid-column: 1 / -1;">
+                <i class="material-icons" style="font-size: 72px; color: rgba(29, 29, 31, 0.2); margin-bottom: 16px;">search_off</i>
+                <h4 class="fw-bold text-dark mb-2" style="font-size:1.4rem;">Produk Tidak Ditemukan</h4>
+                <p class="text-muted mb-0" style="font-weight:500;">Tidak ada produk yang cocok dengan kata kunci, merek, atau filter yang Anda cari.</p>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+{% endblock pageContent %}
+
+{% block ScriptBlock %}
+<script>
+    $(function() {
+        // Beri index original ke semua card
+        $('.catalog-card').each(function(index) {
+            if (!$(this).attr('data-original-index')) {
+                $(this).attr('data-original-index', index);
+            }
+        });
+
+        // =======================================================
+        // 1. Ekstrak Kategori & Tipe yang Sangat Simpel
+        // =======================================================
+        let uniqueCategories = new Set();
+        let uniqueTypes = new Set();
+
+        $('.catalog-card').each(function() {
+            let catName = $(this).find('.card-category').text().trim();
+            if(catName && catName !== "Tanpa Merek") uniqueCategories.add(catName);
+
+            // TIPE: Diambil HANYA KATA PERTAMA dari nama produk
+            // Contoh: "VIVOBOOK M415D" -> "VIVOBOOK"
+            let productName = $(this).find('.card-title-text').text().trim().toUpperCase();
+            let firstWord = productName.split(" ")[0]; 
+            if(firstWord) uniqueTypes.add(firstWord);
+        });
+        
+        Array.from(uniqueCategories).sort().forEach(function(category) {
+            $('#filter_category').append('<option value="' + category + '">' + category + '</option>');
+        });
+
+        Array.from(uniqueTypes).sort().forEach(function(type) {
+            $('#filter_type').append('<option value="' + type + '">' + type + '</option>');
+        });
+
+        // =======================================================
+        // 2. Fungsi Filter Cerdas & Simpel
+        // =======================================================
+        function runFilter() {
+            let searchQuery = $('#search_product').val().toLowerCase().trim();
+            let selectedCategory = $('#filter_category').val();
+            let selectedType = $('#filter_type').val();
+            let sortOrder = $('#sort_price').val();
+            let visibleCount = 0;
+
+            let container = $('#product_catalog_container');
+            let cards = container.find('.catalog-card').get();
+            let emptyMsg = $('#no_result_msg');
+
+            // Toggle tombol Reset
+            if(searchQuery !== '' || selectedCategory !== 'all' || selectedType !== 'all' || sortOrder !== 'default') {
+                $('#btn_reset_filter').addClass('active');
+            } else {
+                $('#btn_reset_filter').removeClass('active');
+            }
+
+            // A. Proses Filter
+            cards.forEach(function(cardElement) {
+                let card = $(cardElement);
+                let sku = card.find('.card-sku').text().toLowerCase();
+                let fullTitle = card.find('.card-title-text').text().trim().toUpperCase();
+                let categoryText = card.find('.card-category').text().toLowerCase();
+                let exactCategory = card.find('.card-category').text().trim();
+
+                // 1. Cek Pencarian Bebas
+                let matchSearch = (sku.indexOf(searchQuery) > -1) || 
+                                  (fullTitle.toLowerCase().indexOf(searchQuery) > -1) || 
+                                  (categoryText.indexOf(searchQuery) > -1);
+                
+                // 2. Cek Kategori
+                let matchCategory = (selectedCategory === 'all') || (exactCategory === selectedCategory);
+
+                // 3. Cek Tipe (SIMPEL: Nama produk diawali oleh Tipe yang dipilih)
+                let matchType = (selectedType === 'all') || fullTitle.startsWith(selectedType);
+
+                if (matchSearch && matchCategory && matchType) {
+                    card.css('display', 'flex');
+                    visibleCount++;
+                } else {
+                    card.css('display', 'none');
+                }
+            });
+
+            // B. Proses Sorting Harga
+            if (sortOrder !== 'default') {
+                cards.sort(function(a, b) {
+                    let priceA = parseFloat($(a).attr('data-price')) || 0;
+                    let priceB = parseFloat($(b).attr('data-price')) || 0;
+                    if (sortOrder === 'highest') {
+                        return priceB - priceA;
+                    } else { 
+                        return priceA - priceB;
+                    }
+                });
+            } else {
+                cards.sort(function(a, b) {
+                    return $(a).attr('data-original-index') - $(b).attr('data-original-index');
+                });
+            }
+
+            // Susun kembali ke layar
+            $.each(cards, function(idx, itm) { container.append(itm); });
+            container.append(emptyMsg); 
+
+            if (visibleCount === 0 && $('.catalog-card').length > 0) {
+                emptyMsg.show();
+            } else {
+                emptyMsg.hide();
+            }
+        }
+
+        $('#search_product').on('input', function(e) {
+            let val = $(this).val();
+            let isAllDigits = /^\d+$/.test(val);
+            if (isAllDigits && val.length > 15) {
+                $(this).val(val.substring(0, 15));
+            } else if (!isAllDigits && val.length > 60) {
+                $(this).val(val.substring(0, 60));
+            }
+            runFilter();
+        });
+        $('#filter_category').on('change', runFilter);
+        $('#filter_type').on('change', runFilter);
+        $('#sort_price').on('change', runFilter);
+
+        $('#btn_reset_filter').click(function() {
+            $('#search_product').val('');
+            $('#filter_category').val('all');
+            $('#filter_type').val('all');
+            $('#sort_price').val('default');
+            
+            // Hapus query string di URL
+            const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+            window.history.pushState({path:newUrl}, '', newUrl);
+
+            runFilter();
+        });
+
+        // =======================================================
+        // Cek URL params di awal & Jalankan Filter
+        // =======================================================
+        const urlParams = new URLSearchParams(window.location.search);
+        const searchParam = urlParams.get('search');
+        if (searchParam) {
+            $('#search_product').val(searchParam);
+        }
+        runFilter();
+
+
+        // =======================================================
+        // 3. UI Popups dan Interaksi Bawaan
+        // =======================================================
+        $('.detail-trigger').click(function() {
+            let card = $(this).closest('.catalog-card');
+            let category = card.find('.card-category').text();
+            let type = card.find('.card-title-text').text();
+            let sku = card.find('.card-sku').text().replace('SKU: ', '');
+            let desc = card.find('.card-desc').attr('title'); 
+            let warranty = $(this).attr('data-warranty'); 
+            
+            let imgElement = $(this).find('img');
+            let imgSrc = imgElement.length > 0 ? imgElement.attr('src') : '';
+            
+            let imageHtml = imgSrc && imgSrc.trim() !== ''
+                ? `<div style="margin-bottom:18px;background:var(--surface, #ffffff);padding:14px;border-radius:14px;border:1px solid var(--border, #e2dff0);text-align:center;">
+                       <img src="${imgSrc}" class="product-info-img" style="max-width:100%;max-height:240px;object-fit:contain;border-radius:8px;">
+                   </div>`
+                : `<div style="height:180px;background:var(--surface, #ffffff);border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:18px;border:1px solid var(--border, #e2dff0);">
+                       <i class="material-icons" style="font-size:56px;color:var(--muted, #a09ab8);">image_not_supported</i>
+                   </div>`;
+
+            Swal.fire({
+                title: `<h4 style="font-family:'Sora',sans-serif;font-weight:800;color:#1c1830;letter-spacing:-.3px;">${category}<br><span style="font-size:1rem;color:#6b6585;font-weight:600;">${type}</span></h4>
+                        <span style="font-size:.8rem;color:#7c3aed;font-family:'Space Mono',monospace;font-weight:700;background:#f3f0ff;padding:4px 11px;border-radius:8px;border:1px solid #ddd6fe;">SKU: ${sku}</span>`,
+                html: `
+                    ${imageHtml}
+                    <div style="text-align:left;background:#f8f7ff;padding:18px;border-radius:16px;border:1px solid #ede9fe;">
+                        <div style="margin-bottom:14px;">
+                            <span style="font-size:.8rem;font-weight:700;color:#059669;background:#ecfdf5;padding:5px 12px;border-radius:10px;border:1px solid #d1fae5;display:inline-flex;align-items:center;gap:6px;">
+                                <i class="material-icons" style="font-size:15px;">verified_user</i> Garansi: ${warranty}
+                            </span>
+                        </div>
+                        <span style="font-size:.68rem;font-weight:800;color:#a09ab8;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:7px;">Spesifikasi Produk</span>
+                        <p style="font-size:.92rem;color:#534f5b;font-weight:500;line-height:1.6;margin:0;white-space:pre-wrap;">${desc}</p>
+                    </div>`,
+                showCloseButton: true,
+                showConfirmButton: false,
+                width: '540px',
+                customClass: { popup: 'swal-premium-popup' , confirmButton: 'swal-premium-confirm', cancelButton: 'swal-premium-cancel' },
+                didOpen: () => { document.querySelector('.swal2-container').style.zIndex = '999999'; }
+            });
+        });
+
+        $('#create_new').click(function() { uni_modal("Registrasi Produk Baru", "{% url 'manage_products-page' %}") })
+        $('.edit-data').click(function() { uni_modal("Produk", "{% url 'manage_products-page' %}?id=" + $(this).attr('data-id')) })
+        
+        $('.delete-data').click(function() {
+            let id = $(this).attr('data-id');
+            let code = $(this).attr('data-code');
+            Swal.fire({
+                title: 'Hapus Produk?',
+                text: "SKU: " + code + " akan dihapus permanen beserta data stoknya. Anda yakin?",
+                icon: 'warning',
+                showCancelButton: true,
+                buttonsStyling: false,
+                cancelButtonColor: '#8E8E93',
+                confirmButtonText: 'Ya, Hapus!',
+                cancelButtonText: 'Batal',
+                customClass: { popup: 'swal-premium-popup', title: 'swal-premium-title' , confirmButton: 'swal-premium-confirm', cancelButton: 'swal-premium-cancel' },
+                didOpen: () => { document.querySelector('.swal2-container').style.zIndex = '999999'; }
+            }).then((result) => {
+                if (result.isConfirmed) { delete_product(id); }
+            });
+        });
+
+        $('#uni_modal').on('shown.bs.modal', function() {
+            if ($('#category_id').length > 0) {
+                $('#category_id').select2({ placeholder: "Pilih Merek", width: '100%', dropdownParent: $('#uni_modal') })
+            }
+        })
+    })
+
+    function delete_product($id) {
+        start_loader();
+        $.ajax({
+            headers: { "X-CSRFToken": '{{csrf_token}}' },
+            url: "{% url 'delete-product' %}",
+            method: "POST", data: { id: $id }, dataType: "json",
+            success: function(resp) {
+                if (resp.status == 'success') {
+                    Swal.fire({
+                        icon: 'success', title: 'Terhapus!', text: 'Produk berhasil dihapus dari sistem.',
+                        showConfirmButton: false, timer: 1500,
+                        customClass: { popup: 'swal-premium-popup', title: 'swal-premium-title' , confirmButton: 'swal-premium-confirm', cancelButton: 'swal-premium-cancel' },
+                        didOpen: () => { document.querySelector('.swal2-container').style.zIndex = '999999'; }
+                    }).then(() => { location.reload(); });
+                } else {
+                    Swal.fire('Error', 'Terjadi kesalahan saat memproses penghapusan.', 'error');
+                    end_loader();
+                }
+            }
+        })
+    }
+</script>
+{% endblock ScriptBlock %}

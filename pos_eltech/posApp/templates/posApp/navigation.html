@@ -1,0 +1,314 @@
+{% load static %}
+<style>
+    /* ==========================================================================
+       1. EL-TECH "DEEP CYBER" VARIABLES
+       ========================================================================== */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
+
+    :root {
+        --bg-core: #000000;       /* Latar belakang utama (Sangat Gelap) */
+        --bg-surface: #101827;    /* Latar belakang menu saat dihover */
+        --neon-cyan: #08f500;     /* Warna aksen Neon Cyan */
+        --neon-glow: rgb(37, 186, 255); /* Pendaran cahaya */
+        --text-pure: #000000;     /* Teks aktif  */
+        --text-dim: #ffffff;      /* Teks pasif */
+    }
+
+    /* ==========================================================================
+       2. SIDEBAR MASTER CONTAINER
+       ========================================================================== */
+    .mdc-drawer.bg-dark {
+        background-color: var(--bg-core) !important;
+        border-right: 1px solid rgba(182, 108, 108, 0.05) !important;
+        width: 260px !important;
+        box-shadow: 5px 0 25px rgba(0, 0, 0, 0.5) !important;
+        z-index: 100 !important;
+        
+        /* FIX BUG POSISI: Hapus position: relative;, cukup gunakan overflow: hidden */
+        overflow: hidden; 
+    }
+
+    /* ==========================================================================
+       [ FITUR BARU ] ANIMASI GLITTER BACKGROUND 
+       ========================================================================== */
+    /* Pastikan konten menu dan logo tetap di depan/di atas glitter */
+    .mdc-drawer__header,
+    .mdc-drawer__content {
+        position: relative;
+        z-index: 2;
+    }
+
+    /* Membuat partikel glitter menggunakan radial-gradient */
+    .mdc-drawer.bg-dark::before {
+        content: '';
+        position: absolute;
+        top: -100%; left: 0; width: 100%; height: 300%;
+        z-index: 0;
+        pointer-events: none; /* Agar tidak mengganggu klik menu */
+        
+        background-image: 
+            radial-gradient(5px 5px at 20px 30px, #3cff00, rgba(0,0,0,0)),
+            radial-gradient(1.5px 1.5px at 60px 80px, var(--neon-cyan), rgba(0,0,0,0)),
+            radial-gradient(1px 1px at 120px 40px, #ffffff, rgba(0,0,0,0)),
+            radial-gradient(4px 4px at 180px 140px, var(--neon-glow), rgba(0,0,0,0)),
+            radial-gradient(1px 1px at 220px 90px, #ffffff, rgba(0,0,0,0)),
+            radial-gradient(1.5px 1.5px at 90px 200px, var(--neon-cyan), rgba(0,0,0,0)),
+            radial-gradient(1px 1px at 150px 250px, var(--neon-glow), rgba(0,0,0,0));
+        background-size: 250px 250px;
+        
+        /* Menjalankan animasi turun perlahan dan berkedip */
+        animation: fallGlitter 10s linear infinite, twinkleGlitter 3s ease-in-out infinite alternate;
+    }
+
+    @keyframes fallGlitter {
+        0% { transform: translateY(0); }
+        100% { transform: translateY(250px); }
+    }
+
+    @keyframes twinkleGlitter {
+        0% { opacity: 0.2; }
+        50% { opacity: 0.9; }
+        100% { opacity: 0.3; }
+    }
+    /* ========================================================================== */
+
+    /* ==========================================================================
+       3. LOGO EL-TECH (ANIMASI GLOW & SHINE KEREN)
+       ========================================================================== */
+    .mdc-drawer__header {
+        padding: 3.5rem 1rem 2.5rem !important;
+        text-align: center;
+        position: relative;
+    }
+
+    .brand-logo {
+        display: inline-block;
+        text-decoration: none !important;
+        outline: none !important;
+    }
+
+    .brand-logo h3 {
+        font-family: 'Inter', sans-serif;
+        font-weight: 900;
+        font-size: 1.5rem;
+        letter-spacing: 5px;
+        margin: 0;
+        text-transform: uppercase;
+        
+        /* Efek Gradasi Mengkilap (Shine) */
+        background: linear-gradient(90deg, #00ff6a 0%, var(--neon-cyan) 50%, #ffffff 100%);
+        background-size: 200% auto;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        
+        /* Menjalankan Animasi: Mengkilap & Berdenyut (Glow) */
+        animation: textShimmer 3s linear infinite, breathingGlow 2s ease-in-out infinite alternate;
+    }
+
+    /* Animasi 1: Gradasi yang berjalan terus menerus */
+    @keyframes textShimmer {
+        to { background-position: 200% center; }
+    }
+
+    /* Animasi 2: Cahaya Neon yang berdenyut dan membesar halus */
+    @keyframes breathingGlow {
+        0% { 
+            filter: drop-shadow(0 0 4px rgba(0, 240, 255, 0.2)); 
+            transform: scale(1); 
+        }
+        100% { 
+            filter: drop-shadow(0 0 12px rgba(0, 240, 255, 0.8)); 
+            transform: scale(1.03); 
+        }
+    }
+
+    /* Garis bawah tipis sebagai pemanis */
+    .brand-logo::after {
+        content: '';
+        display: block;
+        width: 40px;
+        height: 2px;
+        background: var(--neon-cyan);
+        margin: 10px auto 0;
+        border-radius: 2px;
+        box-shadow: 0 0 8px var(--neon-cyan);
+        transition: width 0.3s ease;
+    }
+    .brand-logo:hover::after { width: 80px; }
+
+    /* ==========================================================================
+       4. MENU ITEMS (TATA LETAK SANGAT RAPI)
+       ========================================================================== */
+    .mdc-list-group { padding: 0 16px !important; }
+
+    .mdc-drawer-item {
+        margin-bottom: 6px !important;
+        border-radius: 10px !important;
+        height: 50px !important;
+        display: flex !important; 
+        align-items: center !important;
+        background: transparent !important; 
+        border: none !important;
+        position: relative; 
+        overflow: hidden; 
+        z-index: 1;
+        
+        /* Animasi masuk awal halaman (Cascade) */
+        opacity: 0;
+        animation: slideInMenu 0.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    }
+
+    /* Delay per item agar turun satu per satu secara elegan */
+    .mdc-drawer-item:nth-child(1) { animation-delay: 0.1s; }
+    .mdc-drawer-item:nth-child(2) { animation-delay: 0.15s; }
+    .mdc-drawer-item:nth-child(3) { animation-delay: 0.2s; }
+    .mdc-drawer-item:nth-child(4) { animation-delay: 0.25s; }
+    .mdc-drawer-item:nth-child(5) { animation-delay: 0.3s; }
+
+    @keyframes slideInMenu {
+        0% { opacity: 0; transform: translateX(-20px); }
+        100% { opacity: 1; transform: translateX(0); }
+    }
+
+    /* Garis Pemandu Kiri (Aktif saat di-hover) */
+    .mdc-drawer-item::before {
+        content: ''; position: absolute;
+        left: 0; top: 50%; transform: translateY(-50%);
+        height: 0%; width: 3px;
+        background: var(--neon-cyan);
+        border-radius: 0 4px 4px 0;
+        transition: height 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        box-shadow: 2px 0 8px var(--neon-glow);
+        z-index: 2;
+    }
+
+    /* Link / Teks Default */
+    .mdc-drawer-link {
+        width: 100% !important; height: 100% !important;
+        display: flex !important; align-items: center !important;
+        padding: 0 16px !important;
+        color: var(--text-dim) !important;
+        text-decoration: none !important;
+        font-weight: 600 !important; 
+        font-size: 0.85rem !important;
+        letter-spacing: 0.5px;
+        background: transparent !important;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+    }
+
+    /* Ikon Default */
+    .mdc-drawer-item-icon {
+        margin-right: 16px !important;
+        font-size: 20px !important;
+        color: var(--text-dim) !important;
+        flex-shrink: 0 !important;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+    }
+
+    /* ==========================================================================
+       5. INTERACTIVE HOVER & ACTIVE (ANIMASI HALUS)
+       ========================================================================== */
+
+    /* Hapus efek kedip putih (ripple) bawaan framework */
+    .mdc-list-item__ripple::before, .mdc-list-item__ripple::after { display: none !important; }
+
+    /* Aksi saat mouse menyentuh menu */
+    .mdc-drawer-item:hover, 
+    .mdc-drawer-item:active, 
+    .mdc-drawer-item:focus {
+        background-color: var(--bg-surface) !important;
+        outline: none !important;
+        /* Box shadow sangat tipis di sekeliling kotak menu */
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.171), inset 0 0 0 1px rgba(0, 240, 255, 0.1) !important;
+    }
+
+    /* Garis pemandu kiri memanjang */
+    .mdc-drawer-item:hover::before, 
+    .mdc-drawer-item:active::before { 
+        height: 60%; 
+    }
+
+    /* Teks bergeser halus dan berubah terang */
+    .mdc-drawer-item:hover .mdc-drawer-link, 
+    .mdc-drawer-item:active .mdc-drawer-link {
+        color: var(--text-pure) !important;
+        transform: translateX(6px); 
+    }
+
+    /* Ikon berubah terang dan sedikit membesar dengan glow */
+    .mdc-drawer-item:hover .mdc-drawer-item-icon, 
+    .mdc-drawer-item:active .mdc-drawer-item-icon {
+        color: var(--neon-cyan) !important;
+        transform: scale(1.15);
+        filter: drop-shadow(0 0 6px var(--neon-glow));
+    }
+
+    /* State khusus untuk Menu yang sedang aktif (Jika template Anda merendernya) */
+    .mdc-drawer-item.mdc-list-item--activated {
+        background-color: var(--bg-surface) !important;
+        box-shadow: inset 0 0 0 1px rgba(0, 240, 255, 0.2) !important;
+    }
+    .mdc-drawer-item.mdc-list-item--activated::before { height: 100%; }
+    .mdc-drawer-item.mdc-list-item--activated .mdc-drawer-link { color: var(--text-pure) !important; font-weight: 700 !important; }
+    .mdc-drawer-item.mdc-list-item--activated .mdc-drawer-item-icon { color: var(--neon-cyan) !important; filter: drop-shadow(0 0 6px var(--neon-glow)); }
+
+</style>
+
+<aside class="mdc-drawer mdc-drawer--dismissible mdc-drawer--open bg-dark keep-colors">
+    <div class="mdc-drawer__header">
+        <a href="{% url 'home-page' %}" class="brand-logo text-decoration-none">
+            <img src="{% static 'posApp/assets/images/logo-hijau.jpeg' %}" alt="El-Tech Logo" style="width: 80px; height: 80px; object-fit: contain; display: block; margin: 0 auto 10px auto; border-radius: 50%; box-shadow: 0 0 15px var(--neon-cyan);">
+            
+            <h3>El-Tech</h3>
+        </a>
+    </div>
+    <div class="mdc-drawer__content">
+        <div class="mdc-list-group">
+            <nav class="mdc-list mdc-drawer-menu">
+                
+                <div class="mdc-list-item mdc-drawer-item">
+                    <a class="mdc-drawer-link" href="{% url 'home-page' %}">
+                        <i class="material-icons mdc-drawer-item-icon">home</i>
+                        <span>Beranda</span>
+                    </a>
+                </div>
+
+                <div class="mdc-list-item mdc-drawer-item">
+                    <a class="mdc-drawer-link" href="{% url 'category-page' %}">
+                        <i class="material-icons mdc-drawer-item-icon">list</i>
+                        <span>Daftar Ketegori</span>
+                    </a>
+                </div>
+
+                <div class="mdc-list-item mdc-drawer-item">
+                    <a class="mdc-drawer-link" href="{% url 'product-page' %}">
+                        <i class="material-icons mdc-drawer-item-icon">label</i>
+                        <span>Daftar Produk</span>
+                    </a>
+                </div>
+
+                <div class="mdc-list-item mdc-drawer-item">
+                    <a class="mdc-drawer-link" href="{% url 'inventory-page' %}">
+                        <i class="material-icons mdc-drawer-item-icon">inventory</i>
+                        <span>Inventory</span>
+                    </a>
+                </div>
+                
+                <div class="mdc-list-item mdc-drawer-item">
+                    <a class="mdc-drawer-link" href="{% url 'sales-page' %}">
+                        <i class="material-icons mdc-drawer-item-icon">receipt</i>
+                        <span>Penjualan</span>
+                    </a>
+                </div>
+                
+                <div class="mdc-list-item mdc-drawer-item">
+                    <a class="mdc-drawer-link" href="{% url 'pos-page' %}">
+                        <i class="material-icons mdc-drawer-item-icon">payment</i>
+                        <span>Point of Sale/Kasir</span>
+                    </a>
+                </div>
+
+            </nav>
+        </div>
+    </div>
+</aside>

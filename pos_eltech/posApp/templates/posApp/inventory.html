@@ -1,0 +1,138 @@
+{% extends "posApp/base.html" %}
+{% load humanize %}
+{% block pageContent %}
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+    <div class="mdc-card py-2">
+        <div class="d-flex justify-content-between align-items-center">
+            <h4 class="card-title mb-0">Log Inventory</h4>
+            {% if user.is_superuser %}
+            <div>
+                <a href="{% url 'inventory-add' %}" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm border-0" style="background-color: var(--neon-cyan); color: #000;"><i class="material-icons mdc-button__icon align-middle">add</i> Tambah Stok Masuk</a>
+                <a href="{% url 'inventory-adjust' %}" class="btn btn-warning btn-sm rounded-pill px-3 shadow-sm border-0"><i class="material-icons mdc-button__icon align-middle">sync_alt</i> Penyesuaian Stok</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Ringkasan Banner -->
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+    <div class="row w-100 m-0">
+        <div class="col-md-4 mb-3">
+            <div class="card bg-success text-white shadow-sm border-0 rounded-3">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="material-icons align-middle">arrow_downward</i> Total Masuk</h6>
+                    <h3 class="mb-0">{{ total_masuk }} Unit</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card bg-danger text-white shadow-sm border-0 rounded-3">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="material-icons align-middle">arrow_upward</i> Total Keluar</h6>
+                    <h3 class="mb-0">{{ total_keluar }} Unit</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card bg-warning text-dark shadow-sm border-0 rounded-3">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="material-icons align-middle">warning</i> Stok Menipis (≤5)</h6>
+                    <h3 class="mb-0">{{ low_stock_count }} Produk</h3>
+                    <a href="{% url 'inventory-low-stock' %}" class="text-dark small text-decoration-underline">Lihat Detail</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+    <div class="mdc-card">
+        <form method="GET" class="row mb-4 align-items-end">
+            <div class="col-md-3">
+                <label>Produk</label>
+                <select name="product" class="form-select form-select-sm">
+                    <option value="">Semua Produk</option>
+                    {% for p in products %}
+                    <option value="{{ p.id }}" {% if request.GET.product == p.id|stringformat:"s" %}selected{% endif %}>{{ p.code }} - {{ p.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label>Jenis</label>
+                <select name="type" class="form-select form-select-sm">
+                    <option value="Semua">Semua</option>
+                    <option value="MASUK" {% if request.GET.type == 'MASUK' %}selected{% endif %}>MASUK</option>
+                    <option value="KELUAR" {% if request.GET.type == 'KELUAR' %}selected{% endif %}>KELUAR</option>
+                    <option value="PENYESUAIAN" {% if request.GET.type == 'PENYESUAIAN' %}selected{% endif %}>PENYESUAIAN</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label>Dari Tanggal</label>
+                <input type="date" name="date_start" class="form-control form-control-sm" value="{{ request.GET.date_start }}">
+            </div>
+            <div class="col-md-2">
+                <label>Hingga Tanggal</label>
+                <input type="date" name="date_end" class="form-control form-control-sm" value="{{ request.GET.date_end }}">
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary btn-sm w-100">Filter</button>
+            </div>
+        </form>
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered">
+                <colgroup>
+                    <col width="15%">
+                    <col width="20%">
+                    <col width="10%">
+                    <col width="10%">
+                    <col width="10%">
+                    <col width="20%">
+                    <col width="15%">
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th class="text-center py-1">Tanggal</th>
+                        <th class="text-center py-1">Produk</th>
+                        <th class="text-center py-1">Jenis</th>
+                        <th class="text-center py-1">Jumlah</th>
+                        <th class="text-center py-1">Stok Akhir</th>
+                        <th class="text-center py-1">Keterangan</th>
+                        <th class="text-center py-1">Oleh</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td class="px-2 py-1 text-center">{{ log.date_added|date:'Y-m-d H:i' }}</td>
+                        <td class="px-2 py-1"><a href="{% url 'inventory-product' log.product.id %}">{{ log.product.code }} - {{ log.product.name }}</a></td>
+                        <td class="px-2 py-1 text-center">
+                            {% if log.movement_type == 'MASUK' %}
+                            <span class="badge bg-success rounded-pill px-3">MASUK</span>
+                            {% elif log.movement_type == 'KELUAR' %}
+                            <span class="badge bg-danger rounded-pill px-3">KELUAR</span>
+                            {% else %}
+                            <span class="badge bg-warning text-dark rounded-pill px-3">PENYESUAIAN</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-2 py-1 text-center font-weight-bold">
+                            {% if log.quantity_change > 0 %}+{{ log.quantity_change }}{% else %}{{ log.quantity_change }}{% endif %}
+                        </td>
+                        <td class="px-2 py-1 text-center">{{ log.stock_after }}</td>
+                        <td class="px-2 py-1">
+                            <small>{{ log.note }}</small>
+                            {% if log.reference_code %}<br><small class="text-muted">Ref: {{ log.reference_code }}</small>{% endif %}
+                        </td>
+                        <td class="px-2 py-1 text-center">{{ log.recorded_by.username|default:"Sistem" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-3">Belum ada log pergerakan stok.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock pageContent %}

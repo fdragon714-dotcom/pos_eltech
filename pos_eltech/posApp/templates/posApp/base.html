@@ -1,0 +1,627 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script>
+        // Mencegah flash/kedip putih saat pindah halaman (Terapkan dark mode sedini mungkin)
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        }
+    </script>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    {% if page_title %}
+    <title>{{ page_title }} | El-Tech</title>
+    {% else %}
+    <title>El-Tech</title>
+    {% endif %}
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="{% static 'posApp/assets/bootstrap/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'posApp/assets/material-admin/vendors/mdi/css/materialdesignicons.min.css' %}">
+    <link rel="stylesheet" href="{% static 'posApp/assets/material-admin/vendors/css/vendor.bundle.base.css' %}">
+    <link rel="stylesheet" href="{% static 'posApp/assets/material-admin/vendors/flag-icon-css/css/flag-icon.min.css' %}">
+    <link rel="stylesheet" href="{% static 'posApp/assets/material-admin/vendors/jvectormap/jquery-jvectormap.css' %}">
+    <link rel="stylesheet" href="{% static 'posApp/assets/material-admin/css/demo/style.css' %}">
+    <link rel="stylesheet" href="{% static 'posApp/assets/select2/dist/css/select2.min.css' %}">
+    <link rel="stylesheet" href="{% static 'posApp/assets/default/css/style.css' %}">
+    
+    <link rel="shortcut icon" href="{% static 'posApp/assets/default/logo-toko.png' %}?v=2" />
+    
+    <script src="{% static 'posApp/assets/default/js/jquery-3.6.0.min.js' %}"></script>
+    <script src="{% static 'posApp/assets/bootstrap/js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'posApp/assets/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'posApp/assets/bootstrap/js/popper.min.js' %}"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        /* =========================================================
+           DARK MODE STYLES (Smart Invert Method)
+           ========================================================= */
+        /* Transisi hanya diaktifkan saat tombol diklik (bukan saat pindah halaman) */
+        html.theme-transition { transition: filter 0.3s ease; }
+        
+        html.dark-mode {
+            filter: invert(1) hue-rotate(180deg);
+        }
+        
+        /* Re-invert images and icons to keep their original colors */
+        html.dark-mode img, 
+        html.dark-mode video,
+        html.dark-mode .swal2-icon,
+        html.dark-mode .keep-colors,
+        html.dark-mode .swal2-popup,
+        html.dark-mode .modal-content {
+            filter: invert(1) hue-rotate(180deg);
+        }
+        
+        /* Prevent double inversion for elements inside keep-colors and modals */
+        html.dark-mode .keep-colors img,
+        html.dark-mode .keep-colors video,
+        html.dark-mode .keep-colors .swal2-icon,
+        html.dark-mode .swal2-popup img,
+        html.dark-mode .swal2-popup video,
+        html.dark-mode .swal2-popup .swal2-icon,
+        html.dark-mode .modal-content img,
+        html.dark-mode .modal-content video,
+        html.dark-mode .modal-content .swal2-icon {
+            filter: none !important;
+        }
+        
+        /* Disable Dark Mode during printing */
+        @media print {
+            html.dark-mode, 
+            html.dark-mode img, 
+            html.dark-mode video,
+            html.dark-mode .swal2-icon,
+            html.dark-mode .keep-colors,
+            html.dark-mode .swal2-popup,
+            html.dark-mode .modal-content {
+                filter: none !important;
+                background-color: #ffffff !important;
+            }
+        }
+        /* Fix for Sticky Top Bar */
+        .body-wrapper, .main-wrapper { overflow: visible !important; }
+
+        /* =========================================================
+           BLUR EFFECT FOR MODALS & SWEETALERT (NEW STRATEGY)
+           ========================================================= */
+        /* Alih-alih menggunakan backdrop-filter yang sering bermasalah dengan z-index Sidebar,
+           kita berikan efek blur langsung ke bungkus seluruh halaman (.body-wrapper) 
+           ketika Modal atau SweetAlert sedang terbuka. */
+        
+        body.modal-open .body-wrapper,
+        body.swal2-shown:not(.swal2-toast-shown) .body-wrapper {
+            filter: blur(6px);
+            pointer-events: none;
+            transition: filter 0.3s ease;
+        }
+
+        /* Karena konten sudah diblur, modal-backdrop cukup diberi warna gelap saja */
+        .modal-backdrop.show, .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.6) !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            z-index: 9998 !important;
+        }
+
+        .modal {
+            z-index: 9999 !important;
+        }
+
+        .swal2-container {
+            z-index: 10000 !important;
+        }
+
+        /* =========================================================
+           PREMIUM SWEETALERT (GLOBAL DESIGN)
+           ========================================================= */
+        .swal-premium-popup {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(24px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+            border: 1px solid rgba(255, 255, 255, 1) !important;
+            border-radius: 24px !important;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+            font-family: 'Plus Jakarta Sans', sans-serif !important;
+            padding: 2rem 1.5rem !important;
+            color: #1e293b !important;
+        }
+        .swal-premium-title {
+            font-family: 'Outfit', sans-serif !important;
+            font-size: 1.5rem !important;
+            font-weight: 800 !important;
+            letter-spacing: -0.5px !important;
+            color: #0f172a !important;
+        }
+        .swal-premium-html {
+            color: #475569 !important;
+            font-size: 0.95rem !important;
+            font-weight: 500 !important;
+            line-height: 1.6 !important;
+            margin-top: 0.5rem !important;
+        }
+        .swal-premium-confirm {
+            background: linear-gradient(135deg, #2563eb, #4f46e5) !important;
+            border: none !important;
+            border-radius: 12px !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.5px !important;
+            padding: 12px 28px !important;
+            color: #ffffff !important;
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3) !important;
+            transition: all 0.3s ease !important;
+            margin: 0 5px !important;
+        }
+        .swal-premium-confirm:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 12px 25px rgba(37, 99, 235, 0.4) !important;
+        }
+        .swal-premium-cancel {
+            background: #f1f5f9 !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 12px !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.5px !important;
+            padding: 12px 28px !important;
+            color: #64748b !important;
+            transition: all 0.3s ease !important;
+            margin: 0 5px !important;
+        }
+        .swal-premium-cancel:hover {
+            background: #e2e8f0 !important;
+            color: #475569 !important;
+            transform: translateY(-2px) !important;
+        }
+        .swal2-icon.swal2-error {
+            border-color: rgba(239, 68, 68, 0.5) !important;
+            color: #ef4444 !important;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.15) !important;
+        }
+        .swal2-icon.swal2-error [class^=swal2-x-mark-line] {
+            background-color: #ef4444 !important;
+        }
+        .swal2-icon.swal2-warning {
+            border-color: rgba(245, 158, 11, 0.5) !important;
+            color: #f59e0b !important;
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.15) !important;
+        }
+        .swal2-icon.swal2-warning .swal2-icon-content {
+            color: #f59e0b !important;
+        }
+        .swal2-icon.swal2-success {
+            border-color: rgba(16, 185, 129, 0.5) !important;
+            color: #10b981 !important;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.15) !important;
+        }
+        .swal2-icon.swal2-success [class^=swal2-success-line] {
+            background-color: #10b981 !important;
+        }
+        .swal2-icon.swal2-success .swal2-success-ring {
+            border-color: rgba(16, 185, 129, 0.3) !important;
+        }
+        .swal2-success-circular-line-left,
+        .swal2-success-circular-line-right,
+        .swal2-success-fix {
+            background-color: transparent !important;
+        }
+        /* Custom styling for SweetAlert2 Close Button */
+        .swal2-close {
+            color: #ef4444 !important;
+            outline: none !important;
+            box-shadow: none !important;
+            border: none !important;
+            background: transparent !important;
+            transition: all 0.2s ease !important;
+        }
+        .swal2-close:hover {
+            color: #dc2626 !important;
+            transform: scale(1.1) !important;
+            background: rgba(239, 68, 68, 0.1) !important;
+        }
+        .swal2-close:focus {
+            outline: none !important;
+            box-shadow: none !important;
+        }
+        /* Toast specific adjustments */
+        .swal-premium-popup.swal2-toast {
+            padding: 0.5rem 1rem !important;
+            border-radius: 12px !important;
+            font-size: 0.9rem !important;
+        }
+
+        /* =========================================================
+           MODAL BUTTONS PREMIUM STYLING
+           ========================================================= */
+        .btn-modal-cancel {
+            background-color: #f8fafc !important;
+            color: #f97316 !important; /* Orange text */
+            border: 1px solid #f8fafc !important;
+            border-radius: 10px !important;
+            padding: 10px 24px !important;
+            font-weight: 700 !important;
+            transition: all 0.3s ease !important;
+        }
+        .btn-modal-cancel:hover {
+            background-color: #ffedd5 !important;
+            border-color: #ffedd5 !important;
+            transform: translateY(-2px);
+        }
+        
+        .btn-modal-save {
+            background: linear-gradient(135deg, #3b82f6, #4f46e5) !important;
+            color: #ffffff !important;
+            border: none !important;
+            border-radius: 10px !important;
+            padding: 10px 24px !important;
+            font-weight: 700 !important;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
+            transition: all 0.3s ease !important;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-modal-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(59, 130, 246, 0.4) !important;
+        }
+        .btn-modal-save:active {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+
+<body>
+    <script src="{% static 'posApp/assets/material-admin/js/preloader.js' %}"></script>
+    <div class="body-wrapper">
+        {% block navigation %} {% include "posApp/navigation.html" %} {% endblock navigation %}
+        
+        <div class="main-wrapper mdc-drawer-app-content">
+            {% block TopNavigation %} {% include "posApp/TopNavigation.html" %} {% endblock TopNavigation %}
+
+            <div class="page-wrapper">
+                <main class="content-wrapper">
+                    {% if messages %}
+                    <div class="mdc-layout-grid py-1">
+                        <div class="mdc-layout-grid__inner">
+                            {% for message in messages %}
+                            <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+                                <div class="alert alert-{{message.tags}} w-100 rounded-0 mb-0">
+                                    <div class="d-flex w-100">
+                                        <div class="col-auto flex-shrink-1 flex-grow-1">{{ message }}</div>
+                                        <div class="col-auto text-center">
+                                            <button class="btn-close btn-sm text-sm" type="button" onclick="$(this).closest('.alert').remove()"></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mdc-layout-grid">
+                        <div class="mdc-layout-grid__inner">
+                            {% block pageContent %} {% endblock pageContent %}
+                        </div>
+                    </div>
+                </main>
+                
+                <footer>
+                    <div class="mdc-layout-grid">
+                        <div class="mdc-layout-grid__inner">
+                            <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-6-desktop">
+                                <span class="text-center text-sm-left d-block d-sm-inline-block tx-14"></span>
+                            </div>
+                            <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-6-desktop d-flex justify-content-end">
+                                <span class="float-none float-sm-right d-block mt-1 mt-sm-0 text-center tx-14"></span>
+                            </div>
+                        </div>
+                    </div>
+                </footer>
+            </div>
+        </div>
+    </div>
+    
+    {% block ScriptBlock %} {% endblock ScriptBlock %}
+    
+    <div class="modal fade" id="uni_modal" role='dialog'>
+        <div class="modal-dialog modal-md modal-dialog-centered" role="document">
+            <div class="modal-content rounded-0">
+                <div class="modal-header">
+                    <h5 class="modal-title"></h5>
+                </div>
+                <div class="modal-body">
+                </div>
+                <div class="modal-footer border-0 pt-0 d-flex justify-content-end gap-2">
+                    <button type="button" class="btn-modal-cancel" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn-modal-save" id='submit' onclick="$('#uni_modal form').submit()">
+                        <i class="material-icons" style="font-size: 18px;">check</i> Simpan
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal fade" id="confirm_modal" role='dialog'>
+        <div class="modal-dialog modal-md modal-dialog-centered" role="document">
+            <div class="modal-content rounded-0">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmation</h5>
+                </div>
+                <div class="modal-body">
+                    <div id="delete_content"></div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light fw-bold text-secondary" style="border-radius: 10px; padding: 10px 24px;" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-primary fw-bold" style="border-radius: 10px; padding: 10px 24px; background: linear-gradient(135deg, #ef4444, #dc2626); border: none; box-shadow: 0 4px 12px rgba(239,68,68,0.2);" id='confirm' onclick="">
+                        Lanjutkan
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        window.start_loader = function() {
+            $('body').removeClass('loaded')
+        }
+        window.end_loader = function() {
+            $('body').addClass('loaded')
+        }
+        window.uni_modal = function($title = '', $url = '', $size = "") {
+            start_loader()
+            $.ajax({
+                url: $url,
+                error: err => {
+                    console.log()
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Terjadi kesalahan saat memuat data.',
+                        confirmButtonText: 'Tutup',
+                        buttonsStyling: false,
+                        customClass: {
+                            popup: 'swal-premium-popup',
+                            title: 'swal-premium-title',
+                            htmlContainer: 'swal-premium-html',
+                            confirmButton: 'swal-premium-confirm'
+                        , confirmButton: 'swal-premium-confirm', cancelButton: 'swal-premium-cancel' }
+                    });
+                },
+                success: function(resp) {
+                    if (resp) {
+                        $('#uni_modal .modal-title').html($title)
+                        $('#uni_modal .modal-body').html(resp)
+                        if ($size != '') {
+                            $('#uni_modal .modal-dialog').addClass($size + '  modal-dialog-centered')
+                        } else {
+                            $('#uni_modal .modal-dialog').removeAttr("class").addClass("modal-dialog modal-md modal-dialog-centered")
+                        }
+                        $('#uni_modal').modal({
+                            backdrop: 'static',
+                            keyboard: false,
+                            focus: true
+                        })
+                        $('#uni_modal').modal('show')
+                        end_loader()
+                    }
+                }
+            })
+        }
+        window._conf = function($msg = '', $func = '', $params = []) {
+            Swal.fire({
+                title: 'Konfirmasi',
+                html: $msg,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, Lanjutkan',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window[$func].apply(null, $params);
+                }
+            });
+        };
+
+        window.alert_toast = function($msg = 'Info', $bg = 'success') {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: $bg,
+                title: $msg,
+                showConfirmButton: false,
+                timer: 3000
+            });
+        };
+    </script>
+
+    <script>
+        // ==============================================================
+        // 1. FUNGSI SUARA GLOBAL (Bisa dipanggil dari mana saja)
+        // ==============================================================
+        window.playNotifSound = function() {
+            const soundUrl = "{% static 'posApp/assets/default/sounds/cring.mp3'%}";
+            const customNotifSound = new Audio(soundUrl);
+            customNotifSound.play().then(() => {
+                console.log("Suara notifikasi berhasil diputar!");
+            }).catch(error => {
+                console.warn("Browser mencegah autoplay audio sebelum ada interaksi klik dari user.");
+            });
+        };
+
+        // ==============================================================
+        // 2. INTERCEPTOR ROBUST UNTUK SEMUA NOTIFIKASI
+        // ==============================================================
+        const originalSwalFire = Swal.fire;
+        Swal.fire = function(...args) {
+            let config = args[0];
+            if (typeof config === 'string') {
+                config = {
+                    title: args[0],
+                    text: args[1] || '',
+                    icon: args[2] || 'info'
+                };
+            }
+            
+            if (typeof config === 'object') {
+                let isToast = config.toast === true;
+                let cClass = config.customClass || {};
+                
+                config.customClass = {
+                    popup: isToast ? 'swal-premium-popup swal2-toast' : 'swal-premium-popup',
+                    title: 'swal-premium-title',
+                    htmlContainer: 'swal-premium-html',
+                    confirmButton: 'swal-premium-confirm',
+                    cancelButton: 'swal-premium-cancel'
+                };
+                
+                if (typeof cClass === 'object') {
+                    Object.assign(config.customClass, cClass);
+                } else if (typeof cClass === 'string') {
+                    config.customClass.popup += ' ' + cClass;
+                }
+
+                config.buttonsStyling = false;
+            }
+
+            if (config && config.title === 'Uang Masuk!') {
+                window.playNotifSound();
+            }
+            
+            return originalSwalFire.call(this, config);
+        };
+
+        // ==============================================================
+        // 3. POLLING SYSTEM (Hanya berbunyi untuk Dashboard/Admin)
+        // ==============================================================
+        $(function() {
+            let lastKnownSaleId = null;
+
+            function checkForNewSales() {
+                let isFirstLoad = (lastKnownSaleId === null);
+                let sendId = isFirstLoad ? 0 : lastKnownSaleId;
+
+                $.ajax({
+                    url: "{% url 'check-new-sales' %}",
+                    method: "GET",
+                    data: { last_id: sendId },
+                    dataType: "json",
+                    success: function(resp) {
+                        if (resp.status === 'new_data') {
+                            
+                            if (isFirstLoad) {
+                                lastKnownSaleId = resp.last_id;
+                            } 
+                            else {
+                                lastKnownSaleId = resp.last_id;
+                                
+                                // CEK POSISI HALAMAN: Apakah user sedang membuka halaman Kasir (POS)?
+                                let isKasirPage = window.location.href.indexOf("/pos") > -1;
+                                
+                                // Jika BUKAN halaman Kasir, barulah polling memunculkan notif
+                                // (Karena halaman kasir sudah memiliki notifikasi sendiri di atas)
+                                if (!isKasirPage) {
+                                    let nominal = parseFloat(resp.grand_total).toLocaleString('id-ID');
+                                    
+                                    window.playNotifSound();
+                                    
+                                    originalSwalFire({
+                                        toast: true,
+                                        position: 'top-end',
+                                        icon: 'success',
+                                        title: 'Penjualan Masuk!',
+                                        html: `Struk <b>${resp.code}</b> senilai <b>Rp ${nominal}</b> berhasil diproses.`,
+                                        showConfirmButton: false,
+                                        timer: 10000, 
+                                        timerProgressBar: true,
+                                        customClass: {
+                                            popup: 'swal-premium-popup swal2-toast',
+                                            title: 'swal-premium-title'
+                                        , confirmButton: 'swal-premium-confirm', cancelButton: 'swal-premium-cancel' },
+                                        didOpen: (toast) => {
+                                            toast.addEventListener('mouseenter', originalSwalFire.stopTimer)
+                                            toast.addEventListener('mouseleave', originalSwalFire.resumeTimer)
+                                        }
+                                    });
+                                }
+
+                                // Refresh halaman daftar penjualan jika terbuka
+                                if (window.location.href.indexOf("sales") > -1) {
+                                    setTimeout(() => { location.reload(); }, 3000);
+                                }
+                            }
+                        } else if (resp.status === 'no_data' && isFirstLoad) {
+                            lastKnownSaleId = 0;
+                        }
+                    },
+                    error: function(err) {
+                        // Silent error
+                    }
+                });
+            }
+
+            checkForNewSales();
+            setInterval(checkForNewSales, 5000);
+        });
+
+        // ==============================================================
+        // 4. DARK MODE TOGGLE LOGIC
+        // ==============================================================
+        $(function() {
+            const toggleBtn = document.getElementById('darkModeToggle');
+            const icon = document.getElementById('toggleIcon');
+            const htmlEl = document.documentElement;
+            
+            if (!toggleBtn) return; // Jika tombol tidak ada
+
+            // Cek preferensi dari LocalStorage
+            if (localStorage.getItem('theme') === 'dark') {
+                htmlEl.classList.add('dark-mode');
+                toggleBtn.classList.add('dark-active');
+                icon.innerText = 'brightness_4'; // Moon
+            }
+
+            toggleBtn.addEventListener('click', function() {
+                // Tambahkan kelas transisi agar perpindahan halus saat ditekan
+                htmlEl.classList.add('theme-transition');
+                
+                // Toggle classes
+                htmlEl.classList.toggle('dark-mode');
+                toggleBtn.classList.toggle('dark-active');
+                
+                let isDark = htmlEl.classList.contains('dark-mode');
+                
+                // Rotasi thumb icon secara halus
+                icon.style.transform = 'rotate(180deg) scale(0)';
+                
+                setTimeout(() => {
+                    // Ubah Ikon
+                    icon.innerText = isDark ? 'brightness_4' : 'brightness_5';
+                    icon.style.transform = 'rotate(0deg) scale(1)';
+                    
+                    // Simpan preferensi
+                    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+                    
+                    // Hapus kelas transisi setelah animasi selesai
+                    setTimeout(() => {
+                        htmlEl.classList.remove('theme-transition');
+                    }, 300);
+                }, 200);
+            });
+        });
+    </script>
+    
+    <script src="{% static 'posApp/assets/material-admin/vendors/js/vendor.bundle.base.js' %}"></script>
+    <script src="{% static 'posApp/assets/material-admin/js/material.js' %}"></script>
+    <script src="{% static 'posApp/assets/material-admin/js/misc.js' %}"></script>
+    <script src="{% static 'posApp/assets/material-admin/js/dashboard.js' %}"></script>
+    <script src="{% static 'posApp/assets/select2/dist/js/select2.full.js' %}"></script>
+</body>
+</html>

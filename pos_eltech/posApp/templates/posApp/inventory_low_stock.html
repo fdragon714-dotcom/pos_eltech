@@ -1,0 +1,46 @@
+{% extends "posApp/base.html" %}
+{% load humanize %}
+{% block pageContent %}
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+    <div class="mdc-card">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="card-title">Produk Stok Menipis</h4>
+            <a href="{% url 'inventory-page' %}" class="btn btn-secondary btn-sm">Kembali ke Inventory</a>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered">
+                <thead>
+                    <tr>
+                        <th class="text-center py-1">Kode SKU</th>
+                        <th class="text-center py-1">Produk</th>
+                        <th class="text-center py-1">Kategori</th>
+                        <th class="text-center py-1">Stok Tersisa</th>
+                        {% if user.is_superuser %}
+                        <th class="text-center py-1">Aksi</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in products %}
+                    <tr>
+                        <td class="px-2 py-1 text-center">{{ p.code }}</td>
+                        <td class="px-2 py-1">{{ p.name }}</td>
+                        <td class="px-2 py-1 text-center">{{ p.category_id.name }}</td>
+                        <td class="px-2 py-1 text-center font-weight-bold text-danger">{{ p.stock }}</td>
+                        {% if user.is_superuser %}
+                        <td class="px-2 py-1 text-center">
+                            <a href="{% url 'inventory-add' %}?product_id={{ p.id }}" class="btn btn-sm btn-primary">Restock</a>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-3">Tidak ada produk dengan stok menipis.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock pageContent %}

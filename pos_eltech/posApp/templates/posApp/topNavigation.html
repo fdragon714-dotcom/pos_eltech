@@ -1,0 +1,385 @@
+{% load static %}
+<style>
+    /* =========================================================
+       1. NAVIGASI UTAMA (MODERN GLASSMORPHISM)
+       ========================================================= */
+    .mdc-top-app-bar {
+        background: rgba(255, 255, 255, 0.85) !important; 
+        backdrop-filter: blur(15px) saturate(160%) !important;
+        -webkit-backdrop-filter: blur(15px) saturate(160%) !important;
+        border-bottom: 1px solid rgba(226, 232, 240, 0.8) !important;
+        position: sticky !important;
+        top: 0;
+        z-index: 90 !important; 
+        box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05) !important;
+        height: 70px !important;
+        display: flex;
+        align-items: center;
+        transition: all 0.3s ease;
+    }
+
+    /* =========================================================
+       2. TOMBOL MENU KIRI (SIMPLE & CENTERED)
+       ========================================================= */
+    .sidebar-toggler {
+        background: transparent !important;
+        border: none !important;
+        border-radius: 10px !important;
+        color: #000000 !important;
+        width: 42px !important;
+        height: 42px !important;
+        padding: 0 !important; 
+        margin: 0 !important;
+        cursor: pointer;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        transition: all 0.2s ease-in-out !important;
+        outline: none !important;
+    }
+
+    .sidebar-toggler:hover {
+        background: #f1f5f9 !important;
+        color: #2563eb !important;
+        transform: scale(1.05);
+    }
+
+    /* =========================================================
+       3. TOMBOL PROFIL (NEAT PILL BUTTON)
+       ========================================================= */
+    .menu-profile .mdc-button {
+        background: #ffffff !important; 
+        border-radius: 50px !important;
+        height: 44px !important;
+        padding: 0 14px 0 5px !important; /* Padding seimbang untuk foto */
+        display: flex !important;
+        align-items: center !important;
+        border: 1px solid #e2e8f0 !important;
+        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02) !important;
+        transition: all 0.2s ease-in-out !important;
+        text-transform: none !important;
+        outline: none !important;
+    }
+
+    .menu-profile .mdc-button:hover {
+        border-color: #cbd5e1 !important;
+        box-shadow: 0 6px 15px rgba(15, 23, 42, 0.06) !important;
+        transform: translateY(-1px);
+    }
+
+    .figure img {
+        width: 34px !important;
+        height: 34px !important;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 1.5px solid #f8fafc;
+    }
+
+    .user-name {
+        color: #1e293b !important;
+        font-weight: 700 !important;
+        font-size: 0.85rem !important;
+        margin-left: 10px !important;
+        letter-spacing: 0.2px;
+    }
+    
+    .menu-profile .mdc-button i.material-icons {
+        color: #94a3b8 !important;
+        margin-left: 4px;
+        transition: transform 0.2s ease;
+    }
+
+    .menu-profile .mdc-button:hover i.material-icons {
+        color: #2563eb !important;
+        transform: translateY(1px);
+    }
+
+    /* =========================================================
+       4. DROPDOWN MENU (CLEAN POP-UP)
+       ========================================================= */
+    .mdc-menu-surface {
+        z-index: 1100 !important; 
+        background: #ffffff !important;
+        border-radius: 14px !important;
+        border: 1px solid #e2e8f0 !important;
+        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.1) !important;
+        padding: 8px !important;
+        margin-top: 10px !important;
+        min-width: 230px !important;
+        transform-origin: top right;
+        /* Animasi simpel masuk */
+        animation: simplePopup 0.25s ease-out forwards;
+    }
+
+    @keyframes simplePopup {
+        0% { opacity: 0; transform: scale(0.95) translateY(-10px); }
+        100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .mdc-list-item {
+        border-radius: 10px !important;
+        height: 58px !important; 
+        margin-bottom: 4px !important;
+        transition: all 0.2s ease-in-out !important;
+        padding: 0 !important; 
+        display: flex !important;
+        background: transparent !important;
+        border: none !important;
+    }
+
+    .mdc-list-item a {
+        display: flex !important;
+        align-items: center !important; 
+        text-decoration: none !important;
+        width: 100%;
+        height: 100%;
+        padding: 0 12px !important;
+    }
+
+    /* Kotak Ikon Presisi & Ikon Admin Diperbaiki */
+    .item-icon-box {
+        width: 38px; 
+        height: 38px;
+        background: #f8fafc; 
+        border-radius: 10px;
+        margin-right: 14px !important; 
+        flex-shrink: 0;
+        display: flex !important; 
+        align-items: center !important; 
+        justify-content: center !important;
+        transition: all 0.2s ease-in-out;
+        border: 1px solid #f1f5f9;
+    }
+
+    /* Paksa ikon berada di tengah dan terlihat */
+    .item-icon-box i.material-icons {
+        font-size: 20px !important;
+        color: #64748b !important;
+        display: block !important;
+        visibility: visible !important;
+    }
+
+    .item-text-wrapper {
+        display: flex; 
+        flex-direction: column; 
+        justify-content: center;
+        text-align: left;
+    }
+
+    .item-title {
+        font-weight: 700 !important; 
+        font-size: 0.9rem !important;
+        color: #1e293b; 
+        margin: 0 0 1px 0 !important; 
+        line-height: 1.2;
+    }
+
+    .item-desc {
+        font-weight: 500; 
+        font-size: 0.7rem;
+        color: #94a3b8; 
+        margin: 0 !important; 
+        line-height: 1.2;
+    }
+
+    /* INTERAKSI HOVER ITEM */
+    .mdc-list-item:hover { 
+        background: #f8fafc !important; 
+        transform: translateX(4px); 
+    }
+    .mdc-list-item:hover .item-icon-box { 
+        background: #ffffff; 
+        border-color: #e2e8f0; 
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04); 
+    }
+    .mdc-list-item:hover .item-icon-box i { color: #2563eb !important; }
+    .mdc-list-item:hover .item-title { color: #2563eb; }
+
+    /* LOGOUT KHUSUS */
+    .logout-item:hover { background: #fef2f2 !important; }
+    .logout-item:hover .item-title { color: #ef4444 !important; }
+    .logout-item:hover .item-icon-box { background: #ffffff !important; border-color: #fecaca; }
+    .logout-item:hover .item-icon-box i { color: #ef4444 !important; }
+
+    hr.my-1 { border: none; border-top: 1px solid #f1f5f9; margin: 6px 0 !important; }
+
+    /* =========================================================
+       5. CUSTOM THEME TOGGLE SWITCH (PROFESSIONAL)
+       ========================================================= */
+    .theme-toggle {
+        width: 76px !important;
+        height: 38px !important;
+        border-radius: 38px !important;
+        background: #ffffff !important;
+        border: 1px solid #e2e8f0 !important;
+        position: relative;
+        cursor: pointer;
+        display: flex !important;
+        align-items: center;
+        padding: 0 !important;
+        margin-right: 15px !important;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.02), 0 2px 6px rgba(0,0,0,0.03) !important;
+        transition: background 0.4s ease, border-color 0.4s ease !important;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+    .toggle-thumb {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: #1e293b;
+        position: absolute;
+        left: 3px;
+        top: 3px;
+        transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), background 0.4s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    .toggle-icon {
+        font-size: 18px !important;
+        color: #fbbf24 !important; /* Yellow sun initially */
+        transition: transform 0.4s ease, opacity 0.2s ease;
+    }
+
+    .bg-icon-left, .bg-icon-right {
+        font-size: 18px !important;
+        position: absolute;
+        z-index: 1;
+        transition: opacity 0.4s ease;
+    }
+
+    .bg-icon-left {
+        left: 9px;
+        color: #fbbf24 !important;
+        opacity: 0;
+    }
+
+    .bg-icon-right {
+        right: 9px;
+        color: #94a3b8 !important;
+        opacity: 1;
+    }
+
+    /* === DARK MODE STATE === */
+    .theme-toggle.dark-active {
+        background: #1e293b !important;
+        border-color: #0f172a !important;
+        box-shadow: inset 0 2px 6px rgba(0,0,0,0.3) !important;
+    }
+
+    .theme-toggle.dark-active .toggle-thumb {
+        transform: translateX(38px);
+        background: #ffffff;
+    }
+
+    .theme-toggle.dark-active .toggle-icon {
+        color: #1e293b !important; /* Dark moon */
+    }
+
+    .theme-toggle.dark-active .bg-icon-left {
+        opacity: 1;
+    }
+
+    .theme-toggle.dark-active .bg-icon-right {
+        opacity: 0;
+    }
+</style>
+
+<header class="mdc-top-app-bar">
+    <div class="mdc-top-app-bar__row px-3 w-100">
+        <div class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start p-0">
+            <button class="material-icons sidebar-toggler">menu</button>
+        </div>
+
+        <div class="mdc-top-app-bar__section mdc-top-app-bar__section--align-end p-0">
+            
+            <!-- Dark Mode Toggle Switch -->
+            <button id="darkModeToggle" class="d-none d-md-flex theme-toggle keep-colors">
+                <i class="material-icons bg-icon-left">brightness_5</i>
+                <div class="toggle-thumb" id="toggleThumb">
+                    <i class="material-icons toggle-icon" id="toggleIcon">brightness_5</i>
+                </div>
+                <i class="material-icons bg-icon-right">brightness_4</i>
+            </button>
+
+            <div class="menu-button-container menu-profile d-none d-md-block">
+                <button class="mdc-button mdc-menu-button">
+                    <span class="figure m-0 d-flex align-items-center">
+                        <img src="{% static 'posApp/assets/material-admin/images/faces/face.png' %}" alt="user">
+                    </span>
+                    <span class="user-name">{{ user.first_name|default:user.username }}</span>
+                    <i class="material-icons" style="font-size: 18px;">expand_more</i>
+                </button>
+                
+                <div class="mdc-menu mdc-menu-surface shadow-lg" tabindex="-1">
+                    <ul class="mdc-list p-0" role="menu">
+                        <li class="mdc-list-item" role="menuitem">
+                            <a href="{% url 'redirect-admin' %}" onclick="confirmAdmin(event, '{% url 'redirect-admin' %}')">
+                                <div class="item-icon-box shadow-sm">
+                                    <i class="material-icons">settings</i>
+                                </div>
+                                <div class="item-text-wrapper">
+                                    <p class="item-title">Admin System</p>
+                                    <p class="item-desc">Database & Security</p>
+                                </div>
+                            </a>
+                        </li>
+                        
+                        <hr class="my-1">
+
+                        <li class="mdc-list-item logout-item" role="menuitem">
+                            <a href="{% url 'logout' %}" onclick="confirmLogout(event, '{% url 'logout' %}')">
+                                <div class="item-icon-box shadow-sm">
+                                    <i class="material-icons">power_settings_new</i>
+                                </div>
+                                <div class="item-text-wrapper">
+                                    <p class="item-title">Logout Session</p>
+                                    <p class="item-desc">Keluar dari sistem</p>
+                                </div>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            </div>
+    </div>
+</header>
+
+<script>
+    function confirmAdmin(e, url) {
+        e.preventDefault();
+        Swal.fire({
+            title: 'Ke Admin System?',
+            text: 'Anda akan dialihkan ke halaman utama pengaturan database & keamanan.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Ya, Lanjutkan',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = url;
+            }
+        });
+    }
+
+    function confirmLogout(e, url) {
+        e.preventDefault();
+        Swal.fire({
+            title: 'Konfirmasi Logout',
+            text: 'Apakah Anda yakin ingin keluar dari sesi saat ini?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Ya, Logout',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = url;
+            }
+        });
+    }
+</script>

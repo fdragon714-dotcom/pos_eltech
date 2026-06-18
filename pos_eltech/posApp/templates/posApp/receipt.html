@@ -1,0 +1,292 @@
+{% load humanize %}
+<style>
+    /* ==========================================================================
+       1. MODAL CLEANUP
+       ========================================================================== */
+    #uni_modal .modal-footer { display: none !important; }
+
+    /* ==========================================================================
+       2. GOOGLE FONTS (Font Khas Struk Thermal)
+       ========================================================================== */
+    @import url('https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;600;800&display=swap');
+
+    /* ==========================================================================
+       3. TAMPILAN PREVIEW DI LAYAR
+       ========================================================================== */
+    #outprint {
+        /* Menggunakan font monospace agar rata kiri-kanannya presisi seperti struk asli */
+        font-family: 'Inconsolata', 'Courier New', monospace;
+        color: #000000;
+        background: #ffffff;
+        width: 100%;
+        /* Standar preview untuk kertas thermal 80mm */
+        max-width: 80mm; 
+        margin: 0 auto;
+        padding: 5mm;
+        line-height: 1.3;
+        border-radius: 4px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        border: 1px solid #ccc;
+    }
+
+    /* ==========================================================================
+       4. HEADER & INFO TRANSAKSI
+       ========================================================================== */
+    .r-header { text-align: center; margin-bottom: 5mm; }
+    .r-logo-text { font-size: 1.4rem; font-weight: 800; margin: 0 0 2px 0; letter-spacing: 1px; }
+    .r-address { font-size: 0.8rem; font-weight: 600; }
+
+    .r-divider { border-bottom: 1.5px dashed #000; margin: 3mm 0; }
+    .r-divider-light { border-bottom: 1px dotted #000; margin: 2mm 0; }
+
+    .r-info { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 600; margin-bottom: 2px; }
+    
+    .r-cust { font-size: 0.8rem; font-weight: 600; margin-top: 2mm; }
+
+    /* ==========================================================================
+       5. TABEL BARANG
+       ========================================================================== */
+    .t-head { display: flex; font-size: 0.8rem; font-weight: 800; border-bottom: 1.5px solid #000; padding-bottom: 2px; margin-bottom: 3px; }
+    .t-row { display: flex; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; align-items: flex-start; }
+    
+    .c-qty { width: 15%; text-align: left; }
+    .c-item { width: 50%; padding-right: 2px; word-wrap: break-word; }
+    .c-total { width: 35%; text-align: right; }
+
+    .r-warranty { font-size: 0.7rem; font-weight: 400; margin-top: 1px; font-style: italic; }
+
+    /* ==========================================================================
+       6. KALKULASI TOTAL
+       ========================================================================== */
+    .r-calc { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600; margin-bottom: 2px; }
+    .r-calc .val { font-weight: 800; }
+
+    .r-grand { 
+        display: flex; justify-content: space-between; align-items: center; 
+        border-top: 1.5px dashed #000; border-bottom: 1.5px dashed #000; 
+        padding: 3px 0; margin: 3mm 0; 
+        font-size: 1.1rem; font-weight: 800;
+    }
+
+    /* ==========================================================================
+       7. FOOTER
+       ========================================================================== */
+    .r-footer { text-align: center; margin-top: 6mm; }
+    .r-thanks { font-size: 1rem; font-weight: 800; margin-bottom: 2px; }
+    .r-terms { font-size: 0.7rem; font-weight: 600; line-height: 1.2; }
+
+    /* Tombol Aksi (Hanya muncul di layar) */
+    .action-btn { transition: all 0.2s ease; border-radius: 8px !important; font-weight: 700 !important; }
+    .action-btn:hover { transform: translateY(-2px); }
+
+    /* ==========================================================================
+       8. PENGATURAN KHUSUS PRINTER THERMAL (SANGAT PENTING)
+       ========================================================================== */
+    @media print {
+        /* Mengatur ukuran kertas printer thermal secara spesifik (80mm) */
+        @page { 
+            size: 80mm auto; /* Ubah ke 58mm auto jika printer Anda ukuran kecil */
+            margin: 0; 
+        }
+        
+        body { 
+            background: #fff !important; 
+            color: #000 !important; 
+            margin: 0; 
+            padding: 0; 
+            /* Menghilangkan antialiasing agar font tercetak tajam/hitam legam */
+            -webkit-font-smoothing: none; 
+        }
+        
+        .no-print { display: none !important; }
+        body * { visibility: hidden; }
+        
+        #outprint, #outprint * { visibility: visible; color: #000 !important; }
+        
+        #outprint { 
+            position: absolute; 
+            left: 0; 
+            top: 0; 
+            width: 100% !important; 
+            max-width: 100% !important; 
+            box-shadow: none !important; 
+            border: none !important; 
+            padding: 2mm !important; /* Jarak aman tepi kertas */
+        }
+    }
+</style>
+
+<div class="container-fluid py-2">
+    <div id="outprint">
+        
+        <div class="r-header">
+            <h5 class="r-logo-text">EL-TECH COMPUTER</h5>
+            <div class="r-address">
+                Jl. Padat Karya, Bansir Darat<br>
+                Pontianak<br>
+                WA: 0829-7332-45
+            </div>
+        </div>
+
+        <div class="r-divider"></div>
+
+        <div class="r-info"><span>NOTA :</span> <span>#{{ transaction.code }}</span></div>
+        <div class="r-info"><span>TGL  :</span> <span>{{ transaction.date_added|date:"d/m/y H:i" }}</span></div>
+        <div class="r-info"><span>KASIR:</span> <span>{{ transaction.cashier_name|upper|default:request.user.username|upper }}</span></div>
+        <div class="r-info">
+            <span>BAYAR:</span> 
+            <span>{% if transaction.payment_method == 'qris' or transaction.payment_method == 'QRIS' %}QRIS{% else %}TUNAI{% endif %}</span>
+        </div>
+
+        {% if transaction.customer_name %}
+        <div class="r-divider-light"></div>
+        <div class="r-cust">
+            <div>PELANGGAN: {{ transaction.customer_name|upper }}</div>
+            {% if transaction.customer_wa %}<div>WA: {{ transaction.customer_wa }}</div>{% endif %}
+            {% if transaction.customer_address %}<div>ALAMAT: {{ transaction.customer_address }}</div>{% endif %}
+        </div>
+        {% endif %}
+
+        <div class="r-divider"></div>
+
+        <div class="t-head">
+            <div class="c-qty">QTY</div>
+            <div class="c-item">ITEM</div>
+            <div class="c-total">TOTAL</div>
+        </div>
+        
+        {% for item in salesItems %}
+        <div class="t-row">
+            <div class="c-qty">{{ item.qty|floatformat:0 }}x</div>
+            <div class="c-item">
+                <div>{{ item.product_id.name|upper }}</div>
+                {% if item.product_id.warranty and item.product_id.warranty > 0 %}
+                    <div class="r-warranty">Garansi: {{ item.product_id.warranty }} Hari</div>
+                {% else %}
+                    <div class="r-warranty">Non-Garansi</div>
+                {% endif %}
+            </div>
+            <div class="c-total">{{ item.total|floatformat:0|intcomma }}</div>
+        </div>
+        {% endfor %}
+
+        <div class="r-divider"></div>
+
+        <div class="r-calc">
+            <span class="label">SUBTOTAL</span>
+            <span class="val">{{ transaction.sub_total|floatformat:0|intcomma }}</span>
+        </div>
+
+        <div id="discount-breakdown"></div>
+        
+        <div class="r-grand">
+            <span class="label">TOTAL</span>
+            <span class="val">{{ transaction.grand_total|floatformat:0|intcomma }}</span>
+        </div>
+
+        <div class="r-calc">
+            <span class="label">TUNAI/QRIS</span>
+            <span class="val">{{ transaction.tendered_amount|floatformat:0|intcomma }}</span>
+        </div>
+        
+        {% if transaction.amount_change > 0 %}
+        <div class="r-calc">
+            <span class="label">KEMBALI</span>
+            <span class="val">{{ transaction.amount_change|floatformat:0|intcomma }}</span>
+        </div>
+        {% endif %}
+
+        <div class="r-footer">
+            <div class="r-thanks">** LUNAS **<br>TERIMA KASIH</div>
+            <div class="r-divider-light"></div>
+            <div class="r-terms">
+                Simpan dan Foto struk sbg bukti garansi<br>
+                Garansi hangus jika rusak krn air/jatuh/segel rusak.
+            </div>
+        </div>
+
+    </div>
+
+    <div class="d-flex w-100 justify-content-center mt-4 mb-2 no-print gap-2">
+        <button class="btn btn-dark action-btn px-4 py-2 shadow-sm d-flex align-items-center" type="button" id="receipt_print">
+            <i class="material-icons me-2" style="font-size: 18px;">print</i> CETAK STRUK
+        </button>
+        <button class="btn btn-outline-secondary action-btn px-4 py-2" type="button" data-bs-dismiss="modal">
+            TUTUP
+        </button>
+    </div>
+</div>
+
+<script>
+    $(function() {
+        // ==================================================================
+        // LOGIKA PEMISAHAN DISKON (PERSEN DAN NOMINAL)
+        // ==================================================================
+        let rawSubTotal = "{{ transaction.sub_total }}".replace(',', '.');
+        let rawTaxPercent = "{{ transaction.diskon }}".replace(',', '.');
+        let rawTotalDiscount = "{{ transaction.diskon_amount }}".replace(',', '.');
+
+        let subTotal = parseFloat(rawSubTotal) || 0;
+        let taxPercent = parseFloat(rawTaxPercent) || 0;
+        let totalDiscount = parseFloat(rawTotalDiscount) || 0;
+        
+        let htmlBreakdown = '';
+
+        if (totalDiscount > 0) {
+            let percentAmount = Math.round(subTotal * (taxPercent / 100));
+            let nominalAmount = Math.round(totalDiscount - percentAmount);
+
+            if (taxPercent > 0) {
+                htmlBreakdown += `
+                <div class="r-calc">
+                    <span class="label">DISKON (${taxPercent}%)</span>
+                    <span class="val">-${percentAmount.toLocaleString('id-ID')}</span>
+                </div>`;
+            }
+
+            if (nominalAmount > 0) {
+                htmlBreakdown += `
+                <div class="r-calc">
+                    <span class="label">POTONGAN</span>
+                    <span class="val">-${nominalAmount.toLocaleString('id-ID')}</span>
+                </div>`;
+            }
+        }
+
+        $('#discount-breakdown').html(htmlBreakdown);
+
+        // ==================================================================
+        // LOGIKA CETAK PRINTER THERMAL
+        // ==================================================================
+        $('#receipt_print').click(function() {
+            var printContents = $('#outprint').clone();
+            var styles = $('style').clone();
+            
+            var htmlToPrint = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Cetak Struk - El-Tech</title>
+                    <link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;600;800&display=swap" rel="stylesheet">
+                </head>
+                <body>
+                    ${printContents.prop('outerHTML')}
+                </body>
+                </html>
+            `;
+
+            // Ukuran pop-up disesuaikan dengan dimensi kertas thermal
+            var nw = window.open('', '_blank', "width=350,height=600");
+            nw.document.open();
+            nw.document.write(htmlToPrint);
+            
+            $(nw.document.head).append(styles);
+            nw.document.close();
+            
+            setTimeout(() => { 
+                nw.print(); 
+                setTimeout(() => { nw.close(); }, 250); 
+            }, 800);
+        });
+    });
+</script>

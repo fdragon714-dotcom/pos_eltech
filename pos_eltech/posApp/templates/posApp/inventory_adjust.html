@@ -1,0 +1,82 @@
+{% extends "posApp/base.html" %}
+{% load humanize %}
+{% block pageContent %}
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+    <div class="mdc-card">
+        <h4 class="card-title">Penyesuaian Stok Fisik</h4>
+        <form id="adjust-stock-form" class="mt-3">
+            {% csrf_token %}
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    <label class="control-label">Pilih Produk</label>
+                    <select name="product_id" id="product_id" class="form-select form-select-sm" required>
+                        <option value="" disabled selected>Pilih produk...</option>
+                        {% for p in products %}
+                        <option value="{{ p.id }}" data-stock="{{ p.stock }}">{{ p.code }} - {{ p.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="control-label">Stok Sistem (Saat Ini)</label>
+                    <input type="text" id="sys_stock" class="form-control form-control-sm" readonly>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="control-label">Stok Fisik Sebenarnya</label>
+                    <input type="number" name="physical_stock" id="phy_stock" class="form-control form-control-sm" min="0" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="control-label">Selisih</label>
+                    <input type="text" id="diff_stock" class="form-control form-control-sm" readonly>
+                </div>
+                <div class="col-md-12 mb-3">
+                    <label class="control-label">Keterangan / Alasan Penyesuaian</label>
+                    <textarea name="note" class="form-control" rows="3" required placeholder="Contoh: Barang rusak, salah hitung stok opname..."></textarea>
+                </div>
+            </div>
+            <div class="d-flex justify-content-end mt-3">
+                <button class="btn btn-warning btn-sm rounded-pill px-4 shadow-sm border-0" type="submit">Simpan Penyesuaian</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock pageContent %}
+{% block ScriptBlock %}
+<script>
+    $(function() {
+        $('#product_id').change(function() {
+            var stock = $(this).find(':selected').data('stock');
+            $('#sys_stock').val(stock);
+            calcDiff();
+        });
+        
+        $('#phy_stock').on('input', function() {
+            calcDiff();
+        });
+        
+        function calcDiff() {
+            var sys = parseInt($('#sys_stock').val()) || 0;
+            var phy = parseInt($('#phy_stock').val()) || 0;
+            var diff = phy - sys;
+            $('#diff_stock').val((diff > 0 ? '+' : '') + diff);
+            if(diff > 0) $('#diff_stock').css('color', 'green');
+            else if(diff < 0) $('#diff_stock').css('color', 'red');
+            else $('#diff_stock').css('color', 'black');
+        }
+
+        $('#adjust-stock-form').submit(function(e) {
+            e.preventDefault();
+            $.ajax({
+                headers: { "X-CSRFToken": '{{csrf_token}}' },
+                url: "{% url 'inventory-adjust' %}",
+                data: new FormData($(this)[0]),
+                cache: false, contentType: false, processData: false,
+                method: 'POST', type: 'POST', dataType: 'json',
+                success: function(resp) {
+                    if (resp.status == 'success') location.replace("{% url 'inventory-page' %}");
+                    else alert(resp.msg || "Terjadi kesalahan.");
+                }
+            });
+        });
+    });
+</script>
+{% endblock ScriptBlock %}

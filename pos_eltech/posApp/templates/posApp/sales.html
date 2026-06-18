@@ -1,0 +1,800 @@
+{% extends "posApp/base.html" %} 
+{% load humanize %} 
+{% load static %}  {% block pageContent %}
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/airbnb.css"> 
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://npmcdn.com/flatpickr/dist/l10n/id.js"></script> 
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<style>
+    /* --- 1. VARIABLE WARNA --- */
+    :root {
+        --c-dark: #0f172a;
+        --c-border: #cbd5e1; 
+        --c-bg-light: #f8fafc;
+        --c-text-muted: #64748b;
+        --c-blue: #2563eb;
+    }
+
+    body { background-color: #f1f5f9; }
+
+    /* --- 2. LAYOUT UTAMA (SCREEN) --- */
+    .dashboard-header {
+        display: flex; justify-content: space-between; align-items: flex-end;
+        margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--c-border);
+    }
+
+    .summary-grid {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 12px; margin-bottom: 15px;
+    }
+    .summary-card {
+        background: #ffffff; border: 1px solid var(--c-border); border-radius: 8px;
+        padding: 12px 16px; display: flex; align-items: center; gap: 12px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .sc-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .sc-icon i { font-size: 20px; }
+    .sc-today { background: #eff6ff; color: #3b82f6; } 
+    .sc-week { background: #fdf4ff; color: #d946ef; }  
+    .sc-month { background: #ecfdf5; color: #10b981; } 
+    .sc-year { background: #fffbeb; color: #d97706; }  
+    .sc-details { display: flex; flex-direction: column; }
+    .sc-title { font-size: 0.65rem; font-weight: 700; color: var(--c-text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;}
+    .sc-value { font-family: 'JetBrains Mono', monospace; font-size: 1rem; font-weight: 800; color: var(--c-dark); margin: 0; }
+
+    .main-card {
+        background: #ffffff; border-radius: 8px; border: 1px solid var(--c-border);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); overflow: hidden;
+    }
+
+    .control-bar {
+        background: var(--c-bg-light); padding: 10px 14px; border-bottom: 2px solid #94a3b8;
+        display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
+    }
+
+    .search-box-wrapper {
+        display: flex; align-items: center; background: #ffffff;
+        border: 1px solid var(--c-border); border-radius: 6px;
+        padding: 4px 10px; flex-grow: 1; max-width: 300px; height: 32px;
+    }
+    .search-box-wrapper i { color: var(--c-text-muted); font-size: 16px; margin-right: 6px; }
+    .search-box-wrapper input { border: none; outline: none; width: 100%; font-size: 0.8rem; color: var(--c-dark); }
+
+    .filter-group {
+        display: flex; align-items: center; gap: 8px; background: #ffffff; 
+        padding: 2px 10px; border-radius: 6px; border: 1px solid var(--c-border); height: 32px;
+    }
+    .filter-group select { border: none; background: transparent; font-weight: 600; color: var(--c-dark); outline: none; cursor: pointer; font-size: 0.75rem; }
+    .filter-divider { width: 1px; height: 14px; background: var(--c-border); }
+
+    .btn-print-excel, .btn-export-excel { 
+        height: 32px; border: none; padding: 0 12px; border-radius: 6px; 
+        font-weight: 600; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 6px; transition: 0.2s;
+    }
+    .btn-print-excel { background: #ef4444; color: white; }
+    .btn-print-excel:hover { background: #dc2626;}
+    .btn-export-excel { background: #10b981; color: white; }
+    .btn-export-excel:hover { background: #059669;}
+
+    /* =========================================================================
+       4. TABEL WEB VIEW (KOMPAK)
+       ========================================================================= */
+    .table-responsive { max-height: 600px; overflow-y: auto; }
+    .table-excel { width: 100%; border-collapse: collapse; background: #fff; font-family: 'Inter', sans-serif; }
+    .table-excel thead th {
+        background: #e2e8f0; color: #334155; font-size: 0.7rem; font-weight: 700; 
+        text-transform: uppercase; padding: 8px 10px; border: 1px solid #cbd5e1; 
+        border-bottom: 2px solid #64748b; position: sticky; top: 0; z-index: 10;
+        white-space: nowrap;
+    }
+    .table-excel tbody { border-bottom: 2px solid #94a3b8; }
+    .table-excel tbody:hover { background-color: #f8fafc; }
+    .table-excel td { padding: 6px 10px; border: 1px solid #cbd5e1; vertical-align: middle; color: var(--c-dark); line-height: 1.3; }
+
+    .t-date { font-weight: 700; font-size: 0.75rem; color: #0f172a; display: inline-block; }
+    .t-time { color: var(--c-text-muted); font-size: 0.7rem; display: inline-block; margin-left: 4px; }
+    
+    .badge-code { 
+        font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 0.7rem; 
+        background: #e2e8f0; padding: 1px 5px; border-radius: 4px; border: 1px solid #cbd5e1; 
+        display: inline-block; margin-top: 2px;
+    }
+    
+    .cust-info-box {
+        margin-top: 4px; font-size: 0.65rem; background: #f1f5f9; 
+        padding: 2px 6px; border-radius: 4px; border: 1px solid #e2e8f0;
+        display: inline-block; max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .badge-pay { font-size: 0.7rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; white-space: nowrap; }
+    .t-amount { font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 0.85rem; color: #166534; white-space: nowrap;}
+    
+    .badge-discount-pct { font-size: 0.7rem; font-weight: 800; padding: 2px 4px; border-radius: 4px; background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; display: inline-block; }
+    .discount-val-txt { font-size: 0.7rem; white-space: nowrap; }
+
+    .product-name-col { font-size: 0.75rem; font-weight: 600; }
+    .product-price-col { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: #334155; white-space: nowrap;}
+    .product-qty-col { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 0.75rem; text-align: center; background: #f1f5f9; }
+
+    .view-product-btn { color: var(--c-blue); text-decoration: none; cursor: pointer; }
+    .view-product-btn:hover { color: #1e40af; text-decoration: underline; }
+
+    /* CSS BADGE GARANSI DIBUAT BISA DI KLIK */
+    .w-badge { display: inline-block; font-size: 0.6rem; padding: 2px 4px; border-radius: 4px; font-weight: 700; text-transform: uppercase; white-space: nowrap; cursor: pointer; transition: 0.2s;}
+    .w-badge:hover { transform: scale(1.05); filter: brightness(0.95); }
+    .w-active { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+    .w-expired { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+
+    .btn-icon-only { width: 24px; height: 24px; border-radius: 4px; border: 1px solid var(--c-border); background: #fff; color: var(--c-text-muted); display: inline-flex; align-items: center; justify-content: center; transition: 0.2s; }
+    .btn-icon-only i { font-size: 14px !important; }
+    .btn-icon-only:hover { background: #f1f5f9; color: var(--c-blue); border-color: var(--c-blue); }
+    .btn-icon-only.del:hover { background: #fee2e2; color: #ef4444; border-color: #ef4444;}
+
+    /* Modal Styles */
+    .custom-modal-content { border: none; border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+    .custom-modal-header { background: var(--c-bg-light); border-bottom: 1px solid var(--c-border); border-radius: 12px 12px 0 0; padding: 16px 20px; }
+    #detail-img-wrapper { background: #ffffff; border: 1px solid var(--c-border); border-radius: 8px; padding: 10px; width: 100%; height: 200px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
+    #detail-img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .desc-box { background: #f8fafc; border: 1px solid var(--c-border); border-radius: 8px; padding: 16px; text-align: left; margin-bottom: 20px; }
+
+    /* =========================================================================
+       6. PRINT STYLES (GAYA LAPORAN KORPORAT / AKUNTANSI PROFESIONAL - 11PT)
+       ========================================================================= */
+    #print-header-container, #print-summary-container { display: none; }
+    
+    @media print {
+        @page { size: A4 landscape; margin: 10mm; }
+        
+        /* Pastikan SELURUH background wrapper menjadi putih murni */
+        html, body, .body-wrapper, .main-wrapper, .page-wrapper, .content-wrapper, .mdc-layout-grid, .mdc-layout-grid__cell { 
+            background: #ffffff !important; 
+            background-color: #ffffff !important; 
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        
+        /* Font utama diubah ke 9pt untuk keterbacaan PDF yang profesional dan padat */
+        body { color: #000; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9pt !important; }
+        
+        /* Sembunyikan elemen UI web */
+        .mdc-drawer, .mdc-top-app-bar, .dashboard-header, .control-bar, .action-col, .modal, .hide-on-print, .summary-grid { display: none !important; }
+        .view-product-btn i { display: none !important; }
+        
+        .main-card { border: none !important; box-shadow: none !important; border-radius: 0 !important; background: transparent !important; }
+        .bg-light { background-color: transparent !important; }
+        
+        /* Header Laporan Print */
+        #print-header-container { 
+            display: flex !important; justify-content: space-between; align-items: flex-start; 
+            margin-bottom: 15px; padding-bottom: 0; border-bottom: none;
+        }
+        .print-left { display: flex; align-items: flex-start; gap: 15px; }
+        .print-logo { width: 60px; height: 60px; object-fit: contain; border-radius: 50%; }
+        .print-company-info h2 { margin: 0 0 5px 0; font-size: 14pt; font-weight: bold;}
+        .print-company-info p { margin: 0 0 2px 0; font-size: 9pt; color: #000; }
+        .print-company-info .store-name { font-weight: bold; font-size: 10pt; text-transform: uppercase; }
+        
+        .print-right table { border-collapse: collapse; font-size: 8.5pt; margin-top: 5px; }
+        .print-right table td { padding: 3px 6px; border: none !important; vertical-align: top; }
+        .print-right table td:first-child { width: 80px; }
+
+        /* TABEL EXCEL STYLE (Grid Tegas, Rapi, Kompak) */
+        .table-responsive { max-height: none !important; overflow: visible !important; }
+        
+        .table-excel { 
+            border-collapse: collapse !important; width: 100% !important; 
+            border: none !important; margin-bottom: 0;
+        }
+        
+        .table-excel thead th { 
+            background-color: transparent !important; color: #000 !important; 
+            border-top: 2px solid #000 !important; 
+            border-bottom: 2px solid #000 !important; 
+            border-left: none !important; 
+            border-right: none !important; 
+            padding: 10px 6px !important; 
+            font-size: 9.5pt !important; font-weight: bold !important;
+        }
+        
+        .table-excel tbody { border: none !important; } 
+        
+        .table-excel td { 
+            border: none !important; padding: 6px 6px !important; 
+            font-size: 9.5pt !important; color: #000 !important; vertical-align: top; line-height: 1.3;
+            background-color: transparent !important;
+        }
+
+        /* Membersihkan style web agar PDF bersih */
+        .badge-code, .badge-pay, .badge-discount-pct { 
+            background: transparent !important; border: none !important; 
+            padding: 0 !important; color: #000 !important; text-align: left; font-weight: normal;
+        }
+        .product-qty-col {
+            background: transparent !important; border: none !important; 
+            padding: 0 !important; color: #000 !important; font-weight: normal;
+            text-align: center !important;
+        }
+        .view-product-btn { color: #000 !important; text-decoration: none !important; font-weight: normal !important; pointer-events: none;}
+        .t-amount { font-family: inherit; font-size: 9.5pt; font-weight: normal; color: #000 !important;}
+        
+        /* Format Info Pelanggan di PDF */
+        .cust-info-box { 
+            background: transparent !important; border: none !important; padding: 0 !important; 
+            margin-top: 2px; white-space: normal; font-size: 8pt !important; border-top: none !important; padding-top: 0 !important;
+        }
+        .cust-info-box i { display: none !important; }
+        
+        /* Summary Footer Print */
+        #print-summary-container { 
+            display: flex !important; justify-content: flex-end; align-items: flex-start;
+            width: 100%; border-top: 2px solid #000; padding-top: 10px; margin-top: 5px;
+        }
+        .summary-label-main { flex-grow: 1; text-align: right; padding-top: 4px; padding-right: 40px; font-weight: bold; font-size: 9.5pt; text-transform: uppercase; }
+        .summary-table { width: 350px; border-collapse: collapse; border: none; }
+        .summary-table td { padding: 4px 6px; border: none; font-size: 9.5pt; background-color: transparent !important; }
+        .summary-table td.label { font-weight: bold; text-align: left; width: 170px; }
+        .summary-table td.colon { font-weight: bold; text-align: center; width: 15px; }
+        .summary-table td.value { text-align: right; }
+        .summary-table .highlight td { font-weight: bold; }
+    }
+
+    /* Sweetalert Styling menggunakan Global dari base.html */
+</style>
+
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+    <div class="w-100">
+        <div class="dashboard-header hide-on-print">
+            <div>
+                <h4 class="mb-1 fw-bold text-dark">Data Transaksi Penjualan</h4>
+                <p class="text-muted small mb-0">Laporan Profesional, Export, dan Cetak.</p>
+            </div>
+            <div class="text-end d-none d-md-block">
+                <p class="text-muted small mb-0 fw-bold">Tanggal Sistem</p>
+                <h6 class="mb-0 fw-bold" id="today-date-display">{% now "d M Y" %}</h6>
+            </div>
+        </div>
+
+        <div class="summary-grid hide-on-print">
+            <div class="summary-card"><div class="sc-icon sc-today"><i class="material-icons">today</i></div><div class="sc-details"><span class="sc-title">Hari Ini</span><h4 class="sc-value" id="tot-today">Rp 0</h4></div></div>
+            <div class="summary-card"><div class="sc-icon sc-week"><i class="material-icons">date_range</i></div><div class="sc-details"><span class="sc-title">Minggu Ini</span><h4 class="sc-value" id="tot-week">Rp 0</h4></div></div>
+            <div class="summary-card"><div class="sc-icon sc-month"><i class="material-icons">event_note</i></div><div class="sc-details"><span class="sc-title">Bulan Ini</span><h4 class="sc-value" id="tot-month">Rp 0</h4></div></div>
+            <div class="summary-card"><div class="sc-icon sc-year"><i class="material-icons">event_note</i></div><div class="sc-details"><span class="sc-title">Tahun Ini</span><h4 class="sc-value" id="tot-year">Rp 0</h4></div></div>
+        </div>
+
+        <div id="print-header-container">
+            <div class="print-left">
+                <img src="{% static 'posApp/assets/images/logo-hijau.jpeg' %}" class="print-logo" alt="Logo El-Tech">
+                <div class="print-company-info">
+                    <h2>Laporan Penjualan Rekap</h2>
+                    <p>El-Tech Point of Sale | Pontianak, Kalimantan Barat</p>
+                </div>
+            </div>
+            <div class="print-right">
+                <table>
+                    <tr><td>Periode</td><td id="print-periode-txt">: - s/d -</td></tr>
+                    <tr><td>User</td><td>: {{ request.user.first_name|default:request.user.username|upper }}</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="main-card">
+            <div class="control-bar hide-on-print">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <div class="search-box-wrapper">
+                        <i class="material-icons">search</i>
+                        <input type="text" id="search-code" placeholder="Cari No Struk / Pelanggan..." autocomplete="off">
+                    </div>
+
+                    <div class="filter-group">
+                        <select id="filter-period" onchange="applyFilter()">
+                            <option value="all">Semua Waktu</option>
+                            <option value="today">Hari Ini</option>
+                            <option value="week">Minggu Ini</option>
+                            <option value="month">Bulan Ini</option>
+                            <option value="year">Tahun Ini</option>
+                        </select>
+                        <div class="filter-divider"></div>
+                        <select id="filter-month" onchange="applyFilter()">
+                            <option value="">Bulan...</option>
+                            <option value="01">Jan</option><option value="02">Feb</option><option value="03">Mar</option>
+                            <option value="04">Apr</option><option value="05">Mei</option><option value="06">Jun</option>
+                            <option value="07">Jul</option><option value="08">Agu</option><option value="09">Sep</option>
+                            <option value="10">Okt</option><option value="11">Nov</option><option value="12">Des</option>
+                        </select>
+                        <select id="filter-year" onchange="applyFilter()">
+                            <option value="2026">2026</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 mt-2 mt-md-0">
+                    <button class="btn-export-excel" onclick="confirmExport()">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="14px" height="14px"><path fill="#169154" d="M29,6H15.744C14.781,6,14,6.781,14,7.744v7.259h15V6z"/><path fill="#18482a" d="M14,15.003h15v7.008H14V15.003z"/><path fill="#0c8045" d="M14,22.011h15v7.008H14V22.011z"/><path fill="#17472a" d="M14,29.019h15v7.008H14V29.019z"/><path fill="#159253" d="M29,36.027H14v7.229C14,44.219,14.781,45,15.744,45H29V36.027z"/><path fill="#107c42" d="M29,6v39h9.256C39.219,45,40,44.219,40,43.256V10.744C40,9.781,39.219,9,38.256,9H29V6z"/><path fill="#fff" d="M34.821,30.344l-2.023-3.666l-2.02,3.666h-1.895l2.946-5.011l-2.825-4.836h1.879l1.838,3.46 l1.848-3.46h1.865l-2.859,4.887l2.981,4.96H34.821z"/><path fill="#107c42" d="M14,29.019L8,27.17v-1.871l6-1.554V29.019z"/><path fill="#107c42" d="M14,22.011L8,20.162v-1.871l6-1.554V22.011z"/></svg> Export
+                    </button>
+                    <button class="btn-print-excel" onclick="confirmPrint()">
+                        <i class="material-icons" style="font-size: 14px;">print</i> Cetak
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table-excel" id="sales-table">
+                    <thead>
+                        <tr>
+                            <th width="3%" class="text-center">No</th>
+                            <th width="18%">Info Transaksi & Pelanggan</th>
+                            <th width="24%">Nama Produk</th>
+                            <th width="12%" class="text-end">Harga/Unit</th>
+                            <th width="5%" class="text-center">Qty</th>
+                            <th width="8%" class="text-center hide-on-print">Garansi</th>
+                            <th width="8%" class="text-center">Metode</th>
+                            <th width="8%" class="text-end">Diskon</th>
+                            <th width="10%" class="text-end">Total Akhir</th>
+                            <th width="4%" class="text-center action-col hide-on-print">Aksi</th>
+                        </tr>
+                    </thead>
+                    
+                    {% for sale in sale_data %}
+                    <tbody class="sale-group" 
+                           data-fulldate="{{ sale.date_added|date:'Y-m-d' }}" 
+                           data-amount="{{ sale.grand_total }}" 
+                           data-tax="{{ sale.diskon_amount }}"
+                           data-custname="{{ sale.customer_name|default:'' }}"
+                           data-custwa="{{ sale.customer_wa|default:'' }}"
+                           data-custaddr="{{ sale.customer_address|default:'' }}">
+                        
+                        {% for item in sale.items %}
+                        <tr>
+                            {% if forloop.first %}
+                            <td rowspan="{{ sale.items|length }}" class="text-center text-muted fw-bold align-middle bg-light row-number">{{ forloop.parentloop.counter }}</td>
+                            <td rowspan="{{ sale.items|length }}" class="align-middle">
+                                <div>
+                                    <span class="t-date">{{ sale.date_added|date:'d/m/Y' }}</span>
+                                    <span class="t-time hide-on-print">{{ sale.date_added|date:'H:i' }}</span>
+                                </div>
+                                <div><span class="badge-code sale-code-txt">{{ sale.code }}</span></div>
+                                
+                                {% if sale.customer_name %}
+                                <div class="cust-info-box" title="{{ sale.customer_name }} - {{ sale.customer_wa }}" style="text-align: left;">
+                                    <i class="material-icons text-primary" style="font-size: 10px; vertical-align: middle;">person</i> 
+                                    <b>{{ sale.customer_name }}</b>
+                                    {% if sale.customer_wa %}<span class="text-muted ms-1">{{ sale.customer_wa }}</span>{% endif %}
+                                </div>
+                                {% endif %}
+
+                                <div class="cust-info-box mt-1" style="background:#eef2ff; border-color:#c7d2fe; color:#4338ca; display: inline-block; text-align: left; padding: 2px 6px;">
+                                    <b>Kasir: {{ sale.cashier_name|default:'Admin' }}</b>
+                                </div>
+                            </td>
+                            {% endif %}
+                            
+                            <td class="product-name-col prod-name-txt align-middle">
+                                <a class="view-product-btn" 
+                                   data-category="{{ item.product_id.category_id.name|default:'Tanpa Merek' }}"
+                                   data-title="{{ item.product_id.name }}"
+                                   data-sku="{{ item.product_id.code }}"
+                                   data-desc="{{ item.product_id.description|default:'Tidak ada deskripsi spesifik.' }}"
+                                   data-price="{{ item.price|default:item.product_id.price }}"
+                                   data-warranty="{% if item.product_id.warranty and item.product_id.warranty > 0 %}{{ item.product_id.warranty }} Hari{% else %}Non-Garansi{% endif %}"
+                                   data-img="{% if item.product_id.image %}{{ item.product_id.image.url }}{% endif %}"
+                                   onclick="showProductInfo(event, this)">
+                                    {{ item.product_id.category_id.name }} {{ item.product_id.name }} <i class="material-icons hide-on-print" style="font-size:10px; vertical-align:middle;">info_outline</i>
+                                </a>
+                            </td>
+                            
+                            <td class="text-end align-middle product-price-col">
+                                Rp {{ item.price|default:item.product_id.price|intcomma }}
+                            </td>
+
+                            <td class="product-qty-col prod-qty-txt align-middle">{{ item.qty|floatformat:"0" }}</td>
+                            
+                            <!-- DATA ATTRIBUTES UNTUK GARANSI DITAMBAHKAN DI SINI -->
+                            <td class="text-center hide-on-print align-middle">
+                                <span class="w-badge warranty-calc" 
+                                      data-code="{{ sale.code }}"
+                                      data-product="{{ item.product_id.name }}"
+                                      data-purchased="{{ sale.date_added|date:'Y-m-d' }}" 
+                                      data-duration="{{ item.product_id.warranty|default:0 }}"
+                                      title="Klik untuk melihat detail garansi">...</span>
+                            </td>
+
+                            {% if forloop.first %}
+                            <td rowspan="{{ sale.items|length }}" class="text-center align-middle">
+                                <span class="badge-pay payment-method-txt">{{ sale.payment_method|default:'CASH' }}</span>
+                            </td>
+                            
+                            <td rowspan="{{ sale.items|length }}" class="text-end align-middle">
+                                <div class="hide-on-print">
+                                    <span class="badge-discount-pct discount-pct-txt">{% if sale.diskon > 0 %}{{ sale.diskon|floatformat:"0" }}%{% else %}Rp{% endif %}</span>
+                                </div>
+                                <div class="text-muted fw-bold discount-val-txt mt-1">Rp {{ sale.diskon_amount|intcomma }}</div>
+                            </td>
+
+                            <td rowspan="{{ sale.items|length }}" class="text-end align-middle bg-light">
+                                <span class="t-amount amount-txt">Rp {{ sale.grand_total|intcomma }}</span>
+                            </td>
+                            <td rowspan="{{ sale.items|length }}" class="text-center align-middle action-col hide-on-print">
+                                <div class="d-flex flex-wrap justify-content-center gap-1">
+                                    <button class="btn-icon-only view-data" data-id="{{ sale.id }}" title="Detail Struk"><i class="material-icons">visibility</i></button>
+                                    {% if request.user.is_superuser %}
+                                    <button class="btn-icon-only del delete-data" data-id="{{ sale.id }}" data-code="{{ sale.code }}" title="Hapus"><i class="material-icons">delete</i></button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    {% empty %}
+                    <tbody>
+                        <tr id="empty-row"><td colspan="10" class="text-center py-4 text-muted">Belum ada data transaksi yang tersimpan.</td></tr>
+                    </tbody>
+                    {% endfor %}
+                </table>
+            </div>
+        </div> 
+        
+        <div id="print-summary-container">
+            <div class="summary-label-main">TOTAL KESELURUHAN</div>
+            <table class="summary-table">
+                <tr><td class="label">Total Pendapatan Kotor</td><td class="colon">:</td><td class="value" id="gross-total-print">Rp 0.00</td></tr>
+                <tr><td class="label">Potongan Diskon</td><td class="colon">:</td><td class="value" id="total-discount-print">Rp 0.00</td></tr>
+                <tr class="highlight"><td class="label">Total Akhir Bersih</td><td class="colon">:</td><td class="value" id="grand-total-print">Rp 0.00</td></tr>
+            </table>
+        </div>
+
+    </div>
+</div>
+
+
+{% endblock pageContent %}
+
+{% block ScriptBlock %}
+<script>
+    $(function() {
+        $('#filter-year').val(new Date().getFullYear());
+        calculateWarranties(); 
+        calculateSummaryCards(); 
+        applyFilter();
+        
+        $('.view-data').click(function() { uni_modal("Detail Struk", "{% url 'receipt-modal' %}?id=" + $(this).attr('data-id'), 'mid-big') });
+        $('.delete-data').click(function() { _conf("Hapus data transaksi <b>" + $(this).attr('data-code') + "</b>?", "delete_sale", [$(this).attr('data-id')]) });
+
+        $('#search-code').on('input', function(e) {
+            let val = $(this).val();
+            let isAllDigits = /^\d+$/.test(val);
+            if (isAllDigits && val.length > 15) {
+                $(this).val(val.substring(0, 15));
+            } else if (!isAllDigits && val.length > 60) {
+                $(this).val(val.substring(0, 60));
+            }
+            applyFilter();
+        });
+    });
+
+    function showProductInfo(event, btnElement) {
+        event.stopPropagation();
+        event.preventDefault();
+        let $btn     = $(btnElement);
+        let category = $btn.attr('data-category');
+        let type     = $btn.attr('data-title');
+        let sku      = $btn.attr('data-sku');
+        let desc     = $btn.attr('data-desc');
+        let warranty = $btn.attr('data-warranty');
+        let imgSrc   = $btn.attr('data-img');
+
+        let imageHtml = imgSrc && imgSrc.trim() !== ''
+            ? `<div style="margin-bottom:18px;background:var(--surface, #ffffff);padding:14px;border-radius:14px;border:1px solid var(--border, #e2dff0);text-align:center;">
+                   <img src="${imgSrc}" class="product-info-img" style="max-width:100%;max-height:240px;object-fit:contain;border-radius:8px;">
+               </div>`
+            : `<div style="height:180px;background:var(--surface, #ffffff);border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:18px;border:1px solid var(--border, #e2dff0);">
+                   <i class="mdi mdi-image-off" style="font-size:56px;color:var(--muted, #a09ab8);"></i>
+               </div>`;
+
+        Swal.fire({
+            title: `<h4 style="font-family:'Sora',sans-serif;font-weight:800;color:#1c1830;letter-spacing:-.3px;">${category}<br><span style="font-size:1rem;color:#6b6585;font-weight:600;">${type}</span></h4>
+                    <span style="font-size:.8rem;color:#7c3aed;font-family:'Space Mono',monospace;font-weight:700;background:#f3f0ff;padding:4px 11px;border-radius:8px;border:1px solid #ddd6fe;">SKU: ${sku}</span>`,
+            html: `
+                ${imageHtml}
+                <div style="text-align:left;background:#f8f7ff;padding:18px;border-radius:16px;border:1px solid #ede9fe;">
+                    <div style="margin-bottom:14px;">
+                        <span style="font-size:.8rem;font-weight:700;color:#059669;background:#ecfdf5;padding:5px 12px;border-radius:10px;border:1px solid #d1fae5;display:inline-flex;align-items:center;gap:6px;">
+                            <i class="mdi mdi-shield-check" style="font-size:15px;"></i> Garansi: ${warranty}
+                        </span>
+                    </div>
+                    <span style="font-size:.68rem;font-weight:800;color:#a09ab8;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:7px;">Spesifikasi Produk</span>
+                    <p style="font-size:.92rem;color:#534f5b;font-weight:500;line-height:1.6;margin:0;white-space:pre-wrap;">${desc}</p>
+                </div>`,
+            showCloseButton: true,
+            showConfirmButton: false,
+            width: '540px',
+            customClass: { popup: 'swal-premium-popup' , confirmButton: 'swal-premium-confirm', cancelButton: 'swal-premium-cancel' },
+            didOpen: () => { document.querySelector('.swal2-container').style.zIndex = '999999'; }
+        });
+    }
+
+    // =========================================================================
+    // LOGIKA KLIK GARANSI (MENAMPILKAN POP-UP SWEETALERT)
+    // =========================================================================
+    $(document).on('click', '.warranty-calc', function() {
+        const durationDays = parseInt($(this).data('duration')) || 0;
+        
+        // Jika tidak ada garansi, tampilkan info singkat saja
+        if (durationDays === 0) {
+            Swal.fire({
+                title: 'Info Garansi',
+                text: 'Produk ini tidak memiliki perlindungan garansi toko.',
+                icon: 'info',
+                buttonsStyling: false,
+            });
+            return;
+        }
+
+        const purchasedStr = $(this).data('purchased');
+        const productName = $(this).data('product');
+        const saleCode = $(this).data('code');
+
+        // Kalkulasi Tanggal
+        const purchaseDate = new Date(purchasedStr); 
+        purchaseDate.setHours(0, 0, 0, 0);
+        
+        const expiryDate = new Date(purchaseDate); 
+        expiryDate.setDate(expiryDate.getDate() + durationDays);
+        
+        const today = new Date(); 
+        today.setHours(0, 0, 0, 0);
+        
+        const diffDays = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        
+        // Format Tanggal (DD/MM/YYYY)
+        const formatDate = (date) => {
+            const d = date.getDate().toString().padStart(2, '0');
+            const m = (date.getMonth() + 1).toString().padStart(2, '0');
+            const y = date.getFullYear();
+            return `${d}/${m}/${y}`;
+        };
+
+        // UI Status
+        let statusHtml = '';
+        if (diffDays > 0) {
+            statusHtml = `<div style="background: #ecfdf5; color: #059669; padding: 12px; border-radius: 8px; border: 1px solid #a7f3d0; margin-bottom: 20px; font-weight: bold; font-size: 1.1rem;">
+                            <i class="material-icons" style="vertical-align: middle;">check_circle</i> GARANSI AKTIF (Sisa ${diffDays} Hari)
+                          </div>`;
+        } else {
+            statusHtml = `<div style="background: #fef2f2; color: #dc2626; padding: 12px; border-radius: 8px; border: 1px solid #fecaca; margin-bottom: 20px; font-weight: bold; font-size: 1.1rem;">
+                            <i class="material-icons" style="vertical-align: middle;">cancel</i> GARANSI TELAH HABIS
+                          </div>`;
+        }
+
+        // Tampilkan SweetAlert
+        Swal.fire({
+            title: 'Detail Perlindungan Garansi',
+            html: `
+                ${statusHtml}
+                <table style="width: 100%; text-align: left; font-size: 0.95rem; border-collapse: collapse; margin-top: 10px;">
+                    <tr><td style="padding: 10px 0; border-bottom: 1px solid #eee; color: #64748b;">No. Struk</td><td style="padding: 10px 0; border-bottom: 1px solid #eee; font-weight: bold; color: #0f172a;">${saleCode}</td></tr>
+                    <tr><td style="padding: 10px 0; border-bottom: 1px solid #eee; color: #64748b;">Nama Produk</td><td style="padding: 10px 0; border-bottom: 1px solid #eee; font-weight: bold; color: #0f172a;">${productName}</td></tr>
+                    <tr><td style="padding: 10px 0; border-bottom: 1px solid #eee; color: #64748b;">Masa Berlaku</td><td style="padding: 10px 0; border-bottom: 1px solid #eee; font-weight: bold; color: #0f172a;">${durationDays} Hari</td></tr>
+                    <tr><td style="padding: 10px 0; border-bottom: 1px solid #eee; color: #64748b;">Tgl Pembelian</td><td style="padding: 10px 0; border-bottom: 1px solid #eee; font-weight: bold; color: #0f172a;">${formatDate(purchaseDate)}</td></tr>
+                    <tr><td style="padding: 10px 0; border-bottom: 1px solid #eee; color: #64748b;">Tgl Berakhir</td><td style="padding: 10px 0; border-bottom: 1px solid #eee; font-weight: bold; color: #0f172a;">${formatDate(expiryDate)}</td></tr>
+                </table>
+            `,
+            buttonsStyling: false,
+            confirmButtonText: 'Tutup Detail',
+            width: '450px'
+        });
+    });
+
+    function confirmExport() {
+        Swal.fire({
+            title: 'Export ke Excel?',
+            icon: 'question',
+            showCancelButton: true,
+            buttonsStyling: false,
+            cancelButtonColor: '#ef4444',
+            confirmButtonText: 'Ya, Export!',
+            cancelButtonText: 'Batal',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) { exportToExcel(); }
+        });
+    }
+
+    function confirmPrint() {
+        Swal.fire({
+            title: 'Cetak PDF?',
+            icon: 'question',
+            showCancelButton: true,
+            buttonsStyling: false,
+            cancelButtonColor: '#ef4444',
+            confirmButtonText: 'Ya, Cetak!',
+            cancelButtonText: 'Batal',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) { setTimeout(function() { window.print(); }, 300); }
+        });
+    }
+
+    function calculateWarranties() {
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        $('.warranty-calc').each(function() {
+            const purchaseDateStr = $(this).data('purchased');
+            const durationDays = parseInt($(this).data('duration')) || 0; 
+            if (durationDays === 0) { $(this).hide(); return; }
+            const purchaseDate = new Date(purchaseDateStr); purchaseDate.setHours(0, 0, 0, 0);
+            const expiryDate = new Date(purchaseDate); expiryDate.setDate(expiryDate.getDate() + durationDays);
+            const diffDays = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+            if (diffDays > 0) { $(this).removeClass('w-expired').addClass('w-active').text(diffDays + ' Hr'); } 
+            else { $(this).removeClass('w-active').addClass('w-expired').text('Habis'); }
+        });
+    }
+
+    function calculateSummaryCards() {
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        const startOfWeek = new Date(today); startOfWeek.setDate(today.getDate() - ((today.getDay() || 7) - 1)); startOfWeek.setHours(0, 0, 0, 0);
+        let totToday = 0, totWeek = 0, totMonth = 0, totYear = 0;
+
+        $('.sale-group').each(function() {
+            const dateStr = $(this).attr('data-fulldate'); if (!dateStr) return; 
+            const rowDate = new Date(dateStr); rowDate.setHours(0, 0, 0, 0);
+            const amount = parseFloat($(this).attr('data-amount')) || 0;
+
+            if (rowDate.getTime() === today.getTime()) totToday += amount;
+            if (rowDate >= startOfWeek && rowDate <= today) totWeek += amount;
+            if (rowDate.getMonth() === today.getMonth() && rowDate.getFullYear() === today.getFullYear()) totMonth += amount;
+            if (rowDate.getFullYear() === today.getFullYear()) totYear += amount;
+        });
+
+        $('#tot-today').text('Rp ' + totToday.toLocaleString('id-ID'));
+        $('#tot-week').text('Rp ' + totWeek.toLocaleString('id-ID'));
+        $('#tot-month').text('Rp ' + totMonth.toLocaleString('id-ID'));
+        $('#tot-year').text('Rp ' + totYear.toLocaleString('id-ID'));
+    }
+
+    function calculateReportTotal() {
+        let total = 0, totalDiscount = 0;
+        $('.sale-group:visible').each(function() {
+            total += parseFloat($(this).attr('data-amount')) || 0;
+            totalDiscount += parseFloat($(this).attr('data-tax')) || 0;
+        });
+        
+        let grossTotal = total + totalDiscount;
+        
+        $('#gross-total-print').text('Rp ' + grossTotal.toLocaleString('en-US', {minimumFractionDigits: 2}));
+        $('#total-discount-print').text('Rp ' + totalDiscount.toLocaleString('en-US', {minimumFractionDigits: 2}));
+        $('#grand-total-print').text('Rp ' + total.toLocaleString('en-US', {minimumFractionDigits: 2}));
+        
+        // Update Periode Text
+        let periodVal = $('#filter-period').val();
+        let periodTxt = ": " + new Date().toISOString().split('T')[0] + " s/d " + new Date().toISOString().split('T')[0];
+        if(periodVal === 'all') periodTxt = ": Semua Waktu";
+        else if(periodVal === 'month') {
+            let y = new Date().getFullYear();
+            let m = new Date().getMonth() + 1;
+            periodTxt = ": " + y + "-" + String(m).padStart(2, '0') + "-01 s/d " + y + "-" + String(m).padStart(2, '0') + "-31";
+        }
+        $('#print-periode-txt').text(periodTxt);
+    }
+
+    function applyFilter() {
+        const period = $('#filter-period').val(), month = $('#filter-month').val(), year = $('#filter-year').val();
+        const searchQuery = $('#search-code').val().toLowerCase().trim();
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        const startOfWeek = new Date(today); startOfWeek.setDate(today.getDate() - ((today.getDay() || 7) - 1)); startOfWeek.setHours(0, 0, 0, 0);
+
+        let visibleCounter = 1; 
+        
+        $('.sale-group').each(function() {
+            const dateStr = $(this).attr('data-fulldate'); if (!dateStr) return;
+            const rowDate = new Date(dateStr); rowDate.setHours(0, 0, 0, 0);
+            const rowCode = $(this).find('.sale-code-txt').text().toLowerCase();
+            const custName = ($(this).attr('data-custname') || "").toLowerCase();
+            let isVisible = true;
+
+            if (searchQuery !== "" && !rowCode.includes(searchQuery) && !custName.includes(searchQuery)) isVisible = false;
+
+            if (isVisible && period !== 'all') {
+                $('#filter-month, #filter-year').prop('disabled', true).css('opacity', '0.5');
+                if (period === 'today' && rowDate.getTime() !== today.getTime()) isVisible = false;
+                else if (period === 'week' && (rowDate < startOfWeek || rowDate > today)) isVisible = false;
+                else if (period === 'month' && (rowDate.getMonth() !== today.getMonth() || rowDate.getFullYear() !== today.getFullYear())) isVisible = false;
+                else if (period === 'year' && rowDate.getFullYear() !== today.getFullYear()) isVisible = false;
+            } else if (isVisible && period === 'all') {
+                $('#filter-month, #filter-year').prop('disabled', false).css('opacity', '1');
+                const rowMonth = String(rowDate.getMonth() + 1).padStart(2, '0');
+                const rowYear = String(rowDate.getFullYear());
+                if (year !== "" && rowYear !== year) isVisible = false;
+                if (month !== "" && rowMonth !== month) isVisible = false;
+            }
+            
+            if (isVisible) { $(this).show(); $(this).find('.row-number').text(visibleCounter++); } 
+            else { $(this).hide(); }
+        });
+        calculateReportTotal();
+    }
+
+    // === EXPORT EXCEL DENGAN STRUKTUR DETAIL PER BARANG ===
+    function exportToExcel() {
+        try {
+            let excelData = [
+                ["LAPORAN DETAIL PENJUALAN EL-TECH"],
+                ["Dicetak pada: " + new Date().toLocaleString('id-ID')],
+                [],
+                ["No", "Tgl Transaksi", "No Struk", "Nama Pelanggan", "No. WA", "Alamat", "Nama Produk", "Harga/Unit (Rp)", "Qty", "Metode Pembayaran", "Diskon Total (Rp)", "Total Akhir Transaksi (Rp)"]
+            ];
+            let counter = 1;
+
+            document.querySelectorAll('.sale-group').forEach(tbody => {
+                if (tbody.style.display !== 'none') {
+                    let rows = tbody.querySelectorAll('tr');
+                    if (rows.length === 0) return;
+
+                    let firstRow = rows[0];
+                    let date = firstRow.querySelector('.t-date').innerText.trim();
+                    let code = firstRow.querySelector('.sale-code-txt').innerText.trim();
+                    
+                    let custName = tbody.getAttribute('data-custname') || "-";
+                    let custWA = tbody.getAttribute('data-custwa') || "-";
+                    let custAddr = tbody.getAttribute('data-custaddr') || "-";
+
+                    let payment = firstRow.querySelector('.payment-method-txt').innerText.trim();
+                    let discountRaw = parseFloat(tbody.getAttribute('data-tax')) || 0;
+                    let totalRaw = parseFloat(tbody.getAttribute('data-amount')) || 0;
+
+                    rows.forEach((row, index) => {
+                        let prodBtn = row.querySelector('.view-product-btn');
+                        let prodName = prodBtn ? prodBtn.innerText.replace('info_outline', '').trim() : '';
+                        
+                        let prodPriceRaw = prodBtn ? parseFloat(prodBtn.getAttribute('data-price')) || 0 : 0;
+                        let prodQtyRaw = parseFloat(row.querySelector('.prod-qty-txt').innerText.trim()) || 0;
+
+                        if (index === 0) {
+                            excelData.push([counter++, date, code, custName, custWA, custAddr, prodName, prodPriceRaw, prodQtyRaw, payment, discountRaw, totalRaw]);
+                        } else {
+                            excelData.push(["", "", "", "", "", "", prodName, prodPriceRaw, prodQtyRaw, "", "", ""]);
+                        }
+                    });
+                }
+            });
+
+            if (excelData.length <= 4) { 
+                Swal.fire('Kosong', 'Tidak ada data untuk diexport!', 'warning'); 
+                return; 
+            }
+            
+            let worksheet = XLSX.utils.aoa_to_sheet(excelData);
+            worksheet['!cols'] = [{wch: 5}, {wch: 15}, {wch: 20}, {wch: 25}, {wch: 15}, {wch: 30}, {wch: 40}, {wch: 15}, {wch: 8}, {wch: 20}, {wch: 20}, {wch: 25}];
+            worksheet['!autofilter'] = { ref: "A4:L" + excelData.length };
+            
+            let workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Detail Penjualan");
+            
+            let d = new Date();
+            XLSX.writeFile(workbook, `Detail_Penjualan_ElTech_${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}.xlsx`);
+            
+            Swal.fire({ title: 'Berhasil!', text: 'File Excel telah diunduh.', icon: 'success', timer: 2000, showConfirmButton: false });
+            
+        } catch (e) { Swal.fire('Gagal', 'Terjadi kesalahan saat mengekspor Excel.', 'error'); console.error(e); }
+    }
+
+    function delete_sale($id) {
+        start_loader();
+        $.ajax({
+            headers: { "X-CSRFToken": '{{csrf_token}}' },
+            url: "{% url 'delete-sale' %}",
+            method: "POST", data: { id: $id }, dataType: "json",
+            success: function(resp) {
+                if (resp.status == 'success') location.reload();
+                else { alert_toast("Gagal menghapus data.", 'error'); end_loader(); }
+            }
+        });
+    }
+</script>
+{% endblock ScriptBlock %}

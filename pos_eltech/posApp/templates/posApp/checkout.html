@@ -1,0 +1,342 @@
+{% load humanize %}
+<style>
+    /* ============================================================ */
+    /* 1. IMPORT FONT & CONTAINER                                   */
+    /* ============================================================ */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+
+    .checkout-modal-container { 
+        font-family: 'Inter', sans-serif; 
+        padding: 10px 15px; 
+        background: #ffffff;
+    }
+
+    /* ============================================================ */
+    /* 2. KARTU TOTAL TAGIHAN (HERO CARD)                           */
+    /* ============================================================ */
+    .total-bill-card {
+        background: #0f172a; /* Slate dark modern */
+        color: white;
+        padding: 24px;
+        border-radius: 16px;
+        text-align: center;
+        margin-bottom: 24px;
+        box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.4);
+    }
+    .total-bill-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        color: #94a3b8;
+    }
+    .total-bill-amount {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin: 5px 0 0 0;
+        letter-spacing: -1px;
+    }
+
+    /* ============================================================ */
+    /* 3. STYLE INPUT MODERN                                        */
+    /* ============================================================ */
+    .input-group-modern { margin-bottom: 20px; }
+    .input-group-modern label {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #475569;
+        margin-bottom: 8px;
+    }
+    .input-modern {
+        width: 100%;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        font-size: 1.5rem;
+        font-weight: 800;
+        padding: 14px 16px;
+        color: #0f172a;
+        transition: all 0.3s ease;
+        text-align: right;
+        background: #f8fafc;
+        outline: none;
+    }
+    .input-modern:focus {
+        border-color: #3b82f6;
+        background: #ffffff;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+    }
+    .input-modern:disabled {
+        background: #f1f5f9;
+        color: #64748b;
+        border-color: #e2e8f0;
+        cursor: not-allowed;
+    }
+
+    /* ============================================================ */
+    /* 4. TOMBOL JALAN PINTAS (QUICK CASH)                          */
+    /* ============================================================ */
+    .quick-cash-wrapper {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+    .btn-quick-cash {
+        background: #ffffff;
+        border: 2px solid #e2e8f0;
+        color: #334155;
+        padding: 12px;
+        border-radius: 12px;
+        font-weight: 800;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .btn-quick-cash:hover {
+        border-color: #3b82f6;
+        color: #3b82f6;
+        background: #eff6ff;
+        transform: translateY(-2px);
+    }
+    .btn-quick-cash:active { transform: translateY(0); }
+    
+    .btn-exact-money {
+        grid-column: span 3;
+        background: #f8fafc;
+        border-color: #cbd5e1;
+        color: #0f172a;
+        font-size: 1.1rem;
+    }
+    .btn-exact-money:hover { background: #e2e8f0; border-color: #94a3b8; color: #000; }
+    
+    .btn-reset { border-style: dashed; color: #ef4444; border-color: #fecaca; }
+    .btn-reset:hover { background: #fef2f2; border-color: #fca5a5; color: #dc2626; }
+
+    /* ============================================================ */
+    /* 5. INDIKATOR WARNA KEMBALIAN                                 */
+    /* ============================================================ */
+    .change-highlight { 
+        color: #059669 !important; 
+        border-color: #34d399 !important; 
+        background: #ecfdf5 !important; 
+    }
+    .change-negative { 
+        color: #dc2626 !important; 
+        border-color: #fca5a5 !important; 
+        background: #fef2f2 !important; 
+    }
+    hr.modern-divider { border: 0; height: 1px; background: #e2e8f0; margin: 24px 0; }
+
+    /* ============================================================ */
+    /* 6. HACK: MENGUBAH TOMBOL SAVE & CANCEL BAWAAN MODAL          */
+    /* ============================================================ */
+    #uni_modal .modal-footer {
+        border-top: none !important;
+        padding: 0 24px 24px 24px !important;
+        display: flex !important;
+        gap: 12px !important;
+        justify-content: flex-end !important;
+    }
+    
+    /* Tombol Cancel (Batal) */
+    #uni_modal .modal-footer .btn-secondary {
+        background-color: #f1f5f9 !important;
+        color: #475569 !important;
+        border: none !important;
+        border-radius: 12px !important;
+        padding: 14px 24px !important;
+        font-weight: 700 !important;
+        font-family: 'Inter', sans-serif !important;
+        letter-spacing: 0.5px !important;
+        transition: all 0.2s ease !important;
+    }
+    #uni_modal .modal-footer .btn-secondary:hover {
+        background-color: #e2e8f0 !important;
+        color: #0f172a !important;
+    }
+
+    /* Tombol Save (Proses Pembayaran) */
+    #uni_modal .modal-footer #submit {
+        background-color: #2563eb !important; /* Warna biru modern */
+        color: #ffffff !important;
+        border: none !important;
+        border-radius: 12px !important;
+        padding: 14px 32px !important;
+        font-weight: 800 !important;
+        font-family: 'Inter', sans-serif !important;
+        letter-spacing: 0.5px !important;
+        box-shadow: 0 6px 15px rgba(37, 99, 235, 0.3) !important;
+        transition: all 0.2s ease !important;
+    }
+    #uni_modal .modal-footer #submit:hover {
+        background-color: #1d4ed8 !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4) !important;
+    }
+
+      /* --- EFEK BLUR LINGKUNGAN (BACKGROUND MODAL) --- */
+    body .modal-backdrop.show {
+        backdrop-filter: blur(8px) !important;
+        -webkit-backdrop-filter: blur(8px) !important;
+        background-color: rgba(15, 23, 42, 0.4) !important; /* Warna gelap transparan */
+        opacity: 1 !important;
+    }
+
+</style>
+
+<div class="container-fluid checkout-modal-container">
+    <form action="" id="checkout-form">
+        
+        <div class="total-bill-card">
+            <div class="total-bill-label">Total Tagihan</div>
+            <div class="total-bill-amount">Rp {{ grand_total|intcomma }}</div>
+            <input type="hidden" name="grand_total" value="{{ grand_total }}">
+        </div>
+
+        <div class="input-group-modern">
+            <label for="tendered_amount">Jumlah Uang Diterima (Tunai)</label>
+            <input type="text" name="tendered_amount" id="tendered_amount" class="input-modern" value="0" required autofocus autocomplete="off">
+        </div>
+
+        <div class="quick-cash-wrapper" id="quick-cash-container">
+            <button type="button" class="btn-quick-cash btn-exact-money" data-amount="{{ grand_total }}">UANG PAS</button>
+            <button type="button" class="btn-quick-cash" data-amount="5000">5.000</button>
+            <button type="button" class="btn-quick-cash" data-amount="10000">10.000</button>
+            <button type="button" class="btn-quick-cash" data-amount="20000">20.000</button>
+            <button type="button" class="btn-quick-cash" data-amount="50000">50.000</button>
+            <button type="button" class="btn-quick-cash" data-amount="100000">100.000</button>
+            <button type="button" class="btn-quick-cash btn-reset" id="clear_tendered">RESET</button>
+        </div>
+
+        <hr class="modern-divider">
+
+        <div class="input-group-modern" style="margin-bottom: 0;">
+            <label for="payment_change">Kembalian</label>
+            <input type="text" id="payment_change" class="input-modern change-highlight" value="0" required disabled>
+            <input type="hidden" name="amount_change" value="0">
+        </div>
+
+    </form>
+</div>
+
+<script>
+    $(function() {
+        // ============================================================
+        // UBAH TEKS TOMBOL MODAL FOOTER
+        // ============================================================
+        $('#uni_modal .modal-footer #submit').text('PROSES PEMBAYARAN');
+        $('#uni_modal .modal-footer .btn-secondary').text('BATAL');
+
+        // Fokus otomatis saat pop-up terbuka
+        setTimeout(function(){ $('#tendered_amount').focus().select(); }, 400);
+
+        // ============================================================
+        // LOGIKA PERHITUNGAN KEMBALIAN
+        // ============================================================
+        function updateChange() {
+            var tendered_amount = $('#tendered_amount').val() || "0";
+            var payable = $('[name="grand_total"]').val() || "0";
+            
+            // Hapus semua karakter non-digit untuk amannya
+            tendered_amount = tendered_amount.toString().replace(/[^0-9]/g, '');
+            payable = payable.toString().replace(/[^0-9.]/g, ''); // Biarkan titik untuk desimal pada payable
+            
+            var change = 0;
+            tendered_amount = tendered_amount > 0 ? tendered_amount : 0;
+            
+            change = parseFloat(tendered_amount) - parseFloat(payable);
+            
+            $('#payment_change').val(parseFloat(change).toLocaleString('id-ID')); // Format Rupiah
+            $('[name="amount_change"]').val(change);
+
+            // Mengubah warna form kembalian jika uang kurang
+            if(change < -0.01){
+                $('#payment_change').addClass('change-negative').removeClass('change-highlight');
+            } else {
+                $('#payment_change').addClass('change-highlight').removeClass('change-negative');
+            }
+        }
+
+        // Listener Input saat kasir mengetik
+        $('#tendered_amount').on('input keypress keyup keydown', function() {
+            // Auto format dengan pemisah ribuan
+            var val = $(this).val().replace(/[^0-9]/g, '');
+            if(val !== '') {
+                $(this).val(parseInt(val, 10).toLocaleString('id-ID'));
+            } else {
+                $(this).val('0');
+            }
+            updateChange();
+        });
+
+        // Klik Tombol Pintasan (Uang Pas, 10rb, 50rb, dll)
+        $('.btn-quick-cash').click(function(){
+            var amount = $(this).data('amount');
+            if(amount !== undefined && amount !== null){
+                var formattedAmount = parseFloat(amount).toLocaleString('id-ID');
+                $('#tendered_amount').val(formattedAmount);
+                updateChange();
+            }
+        });
+
+        // Reset Input ke 0
+        $('#clear_tendered').click(function(){
+            $('#tendered_amount').val(0);
+            updateChange();
+            $('#tendered_amount').focus().select();
+        });
+
+        // ============================================================
+        // VALIDASI SEBELUM DISIMPAN & EKSEKUSI (DIPERBAIKI)
+        // ============================================================
+        $('#checkout-form').submit(function(e) {
+            e.preventDefault();
+            
+            var tenderedStr = $('#tendered_amount').val() || "0";
+            var tendered = parseFloat(tenderedStr.replace(/[^0-9]/g, '')) || 0;
+            var payable = parseFloat($('[name="grand_total"]').val().replace(/[^0-9.]/g, '')) || 0;
+            var change = tendered - payable;
+            
+            // Validasi 1: Uang tidak boleh 0 / Kosong jika tagihan > 0
+            if (tendered === 0 && payable > 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Peringatan',
+                    text: 'Nominal uang tunai belum Anda masukkan!',
+                    buttonsStyling: false,
+                    customClass: { popup: 'swal-premium-popup', title: 'swal-premium-title' , confirmButton: 'swal-premium-confirm', cancelButton: 'swal-premium-cancel' }
+                });
+                $('#tendered_amount').focus();
+                return false;
+            }
+            
+            // Validasi 2: Uang tidak boleh kurang dari tagihan
+            if (change < -0.01) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Uang Kurang',
+                    text: 'Jumlah uang yang dibayarkan kurang dari total tagihan!',
+                    buttonsStyling: false,
+                    customClass: { popup: 'swal-premium-popup', title: 'swal-premium-title' , confirmButton: 'swal-premium-confirm', cancelButton: 'swal-premium-cancel' }
+                });
+                $('#tendered_amount').focus().select();
+                return false;
+            }
+            
+            // Mengirim paksa status 'Tunai', Nominal Uang, dan Kembalian ke form utama di background
+            if ($('#pos-form input[name="payment_method"]').length === 0) {
+                $('#pos-form').append('<input type="hidden" name="payment_method" value="Tunai">');
+                $('#pos-form').append('<input type="hidden" name="tendered_amount" value="' + tendered + '">');
+                $('#pos-form').append('<input type="hidden" name="amount_change" value="' + change + '">');
+            } else {
+                $('#pos-form input[name="payment_method"]').val('Tunai');
+                $('#pos-form input[name="tendered_amount"]').val(tendered);
+                $('#pos-form input[name="amount_change"]').val(change);
+            }
+            
+            // Lanjutkan eksekusi ke backend
+            $('#pos-form').submit();
+        });
+    });
+</script>

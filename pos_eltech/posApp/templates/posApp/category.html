@@ -1,0 +1,538 @@
+{% extends "posApp/base.html" %} 
+{% block pageContent %}
+
+<!-- Font Apple Style (Inter/SF Pro) -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
+
+<style>
+    /* =========================================================
+       1. SPATIAL iOS 26 STRUCTURED THEME
+       ========================================================= */
+    :root {
+        /* Spatial Animated Background Colors */
+        --mesh-bg-1: #d8b4fe;
+        --mesh-bg-2: #bae6fd;
+        --mesh-bg-3: #fbcfe8;
+
+        /* Glass Variables for Solid Structure */
+        --glass-surface: rgba(255, 255, 255, 0.65);
+        --glass-surface-hover: rgba(255, 255, 255, 0.85);
+        --glass-inset: rgba(255, 255, 255, 0.4);
+        
+        --glass-border: rgba(255, 255, 255, 0.8);
+        --glass-border-subtle: rgba(255, 255, 255, 0.4);
+        --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+        --glass-blur: blur(24px) saturate(180%);
+
+        /* Typography */
+        --ios-text-primary: #1d1d1f;
+        --ios-text-secondary: #515154;
+        --ios-text-tertiary: #86868b;
+        
+        /* Accents & Status */
+        --ios-blue: #007AFF;
+        --ios-blue-glow: rgba(0, 122, 255, 0.3);
+        --ios-green: #34C759;
+        --ios-green-glow: rgba(52, 199, 89, 0.25);
+        --ios-red: #FF3B30;
+        --ios-red-glow: rgba(255, 59, 48, 0.25);
+    }
+
+    body { 
+        font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+        background: linear-gradient(135deg, var(--mesh-bg-1) 0%, var(--mesh-bg-2) 50%, var(--mesh-bg-3) 100%);
+        background-attachment: fixed;
+        color: var(--ios-text-primary);
+        -webkit-font-smoothing: antialiased;
+    }
+
+    /* =========================================================
+       2. WIDGET HEADER (GLASS ISLAND)
+       ========================================================= */
+    .dashboard-header {
+        background: var(--glass-surface);
+        backdrop-filter: var(--glass-blur);
+        -webkit-backdrop-filter: var(--glass-blur);
+        border: 1px solid var(--glass-border);
+        border-radius: 24px;
+        padding: 24px 32px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: var(--glass-shadow);
+        margin-bottom: 24px;
+    }
+
+    .header-info h4 {
+        font-weight: 800;
+        color: var(--ios-text-primary);
+        font-size: 1.4rem;
+        margin: 0 0 4px 0;
+        letter-spacing: -0.5px;
+    }
+    .header-info p {
+        font-size: 0.9rem;
+        color: var(--ios-text-secondary);
+        font-weight: 500;
+        margin: 0;
+    }
+
+    .btn-primary {
+        background: rgba(255, 255, 255, 0.9);
+        color: var(--ios-blue);
+        border: 1px solid #ffffff;
+        padding: 12px 24px;
+        border-radius: 30px; /* Pill shape */
+        font-weight: 700;
+        font-size: 0.9rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        box-shadow: 0 4px 15px var(--ios-blue-glow);
+        cursor: pointer;
+    }
+    .btn-primary:hover { 
+        background: var(--ios-blue); color: #ffffff; 
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 0 6px 20px var(--ios-blue-glow);
+    }
+
+    /* =========================================================
+       3. STRUCTURED DATA GRID (GLASS CARD)
+       ========================================================= */
+    /* Container Tabel sekarang menyatu rapi dalam 1 card kaca */
+    .table-card {
+        background: var(--glass-surface);
+        backdrop-filter: var(--glass-blur);
+        -webkit-backdrop-filter: var(--glass-blur);
+        border: 1px solid var(--glass-border);
+        border-radius: 24px;
+        box-shadow: var(--glass-shadow);
+        overflow: hidden;
+    }
+
+    .data-table { width: 100%; border-collapse: collapse; }
+    
+    .data-table thead th {
+        background: rgba(255, 255, 255, 0.3);
+        color: var(--ios-text-secondary);
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 16px 28px;
+        border-bottom: 1px solid var(--glass-border);
+        text-align: left;
+    }
+
+    .data-table tbody tr.parent-row { 
+        border-bottom: 1px solid rgba(0, 0, 0, 0.04); 
+        transition: background-color 0.3s ease;
+    }
+    .data-table tbody tr.parent-row:last-child { border-bottom: none; }
+    .data-table tbody tr.parent-row:hover { background-color: var(--glass-surface-hover); }
+    .data-table td { padding: 20px 28px; vertical-align: top; }
+
+    /* =========================================================
+       4. TYPOGRAPHY, CHIPS & BUTTONS
+       ========================================================= */
+    .id-tag {
+        font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 700;
+        color: var(--ios-blue); background: rgba(255, 255, 255, 0.8);
+        padding: 8px 12px; border-radius: 10px; border: 1px solid var(--glass-border);
+        display: inline-block; box-shadow: 0 2px 8px var(--ios-blue-glow);
+    }
+
+    .item-title-wrapper { display: flex; align-items: flex-start; gap: 16px; }
+
+    .brand-name {
+        font-weight: 800; font-size: 1.15rem; color: var(--ios-text-primary);
+        margin-bottom: 4px; display: block; letter-spacing: -0.3px;
+    }
+    .brand-desc { font-size: 0.9rem; color: var(--ios-text-secondary); line-height: 1.5; margin: 0; font-weight: 500;}
+
+    /* Toggle Orb Button */
+    .btn-toggle {
+        background: rgba(255, 255, 255, 0.6); border: 1px solid var(--glass-border);
+        color: var(--ios-text-tertiary); cursor: pointer;
+        width: 36px; height: 36px; border-radius: 50%; /* Orb shape */
+        display: flex; align-items: center; justify-content: center;
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); flex-shrink: 0; margin-top: 2px;
+        box-shadow: inset 0 2px 4px rgba(255,255,255,0.8);
+    }
+    .btn-toggle:hover { background: #ffffff; color: var(--ios-blue); transform: scale(1.08); }
+    .btn-toggle i { transition: transform 0.4s ease; font-size: 20px; }
+    
+    .btn-toggle.expanded { 
+        background: var(--ios-blue); color: #ffffff; border-color: var(--ios-blue); 
+        box-shadow: 0 4px 12px var(--ios-blue-glow);
+    }
+    .btn-toggle.expanded i { transform: rotate(180deg); }
+
+    /* Luminous Status Pill */
+    .status-pill {
+        display: inline-flex; align-items: center; gap: 8px;
+        padding: 8px 16px; border-radius: 20px;
+        font-size: 0.75rem; font-weight: 800; text-transform: uppercase;
+        background: rgba(255, 255, 255, 0.8); border: 1px solid var(--glass-border);
+    }
+    .status-pill.active { color: var(--ios-green); box-shadow: 0 4px 12px var(--ios-green-glow); }
+    .status-pill.inactive { color: var(--ios-text-tertiary); }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 6px currentColor;}
+
+    /* Action Icons (Frosted Apple Style) */
+    .action-cell { display: flex; justify-content: center; gap: 10px; }
+    .btn-icon {
+        width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--glass-border-subtle);
+        background: rgba(255, 255, 255, 0.4); color: var(--ios-text-secondary);
+        display: inline-flex; align-items: center; justify-content: center;
+        transition: all 0.3s ease; cursor: pointer;
+    }
+    .btn-icon:hover { background: #ffffff; border-color: #ffffff; box-shadow: 0 4px 10px rgba(0,0,0,0.05); transform: translateY(-2px);}
+    .btn-icon.edit:hover { color: var(--ios-blue); }
+    .btn-icon.delete:hover { color: var(--ios-red); }
+
+    /* =========================================================
+       5. HIERARCHY TREE VIEW (NEAT INSET GLASS BOX)
+       ========================================================= */
+    .child-row { background: transparent; }
+    .child-container { padding: 0 32px 32px 88px; }
+
+    /* Kotak dalam (Sub-table) yang rapi */
+    .tree-wrapper {
+        background: var(--glass-inset); border: 1px solid var(--glass-border);
+        border-radius: 16px; overflow: hidden; box-shadow: inset 0 2px 10px rgba(255,255,255,0.4);
+    }
+    
+    .tree-header {
+        display: flex; justify-content: space-between;
+        background: rgba(255, 255, 255, 0.3); padding: 14px 20px;
+        border-bottom: 1px solid var(--glass-border-subtle);
+        font-size: 0.75rem; font-weight: 700; color: var(--ios-text-secondary); text-transform: uppercase;
+    }
+
+    .tree-body { padding: 16px 20px; }
+
+    /* Folder Structure */
+    .type-group { position: relative; margin-bottom: 16px; }
+    .type-group:last-child { margin-bottom: 0; }
+    
+    .type-title {
+        display: flex; align-items: center; gap: 8px;
+        font-size: 0.9rem; font-weight: 700; color: var(--ios-blue);
+        margin-bottom: 10px;
+    }
+
+    .series-list {
+        position: relative; margin-left: 8px; padding-left: 20px;
+        border-left: 1.5px solid rgba(0, 122, 255, 0.2); /* Soft blue line */
+    }
+    
+    .series-item {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 10px 14px; background: rgba(255, 255, 255, 0.6); 
+        border: 1px solid var(--glass-border); border-radius: 10px;
+        margin-bottom: 8px; position: relative; transition: all 0.2s ease;
+    }
+    .series-item:hover { background: #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.02); transform: translateX(2px); }
+    .series-item:last-child { margin-bottom: 0; }
+
+    /* Horizontal Connector */
+    .series-item::before {
+        content: ''; position: absolute; left: -20px; top: 50%;
+        width: 20px; height: 1.5px; background: rgba(0, 122, 255, 0.2);
+    }
+
+    .series-name { font-size: 0.9rem; color: var(--ios-text-primary); font-weight: 500;}
+    .series-name strong { font-weight: 800; }
+
+    /* Spatial Stock Pill */
+    .stock-tag {
+        font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; font-weight: 700;
+        padding: 4px 12px; border-radius: 12px;
+    }
+    .stock-tag.available { background: rgba(52, 199, 89, 0.15); color: var(--ios-green); }
+    .stock-tag.empty { background: rgba(255, 59, 48, 0.15); color: var(--ios-red); }
+
+</style>
+
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+    <div class="w-100">
+        <div class="dashboard-header">
+            <div class="header-info">
+                <h4>Kategori</h4>
+            </div>
+            
+            {% if request.user.is_superuser %}
+            <div>
+                <button class="btn-primary" id="create_new">
+                    <i class="material-icons" style="font-size: 18px;">add</i>
+                    Tambah Kategori
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+    <div class="table-card w-100">
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th width="8%" class="text-center">No</th>
+                        <th width="52%">Informasi Brand</th>
+                        <th width="20%" class="text-center">Status</th>
+                        <th width="20%" class="text-center">Kontrol</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cat in category %}
+                    <tr class="parent-row">
+                        <td class="text-center">
+                            <span class="id-tag">#{{ forloop.counter|stringformat:"02d" }}</span>
+                        </td>
+                        <td>
+                            <div class="item-title-wrapper">
+                                <button class="btn-toggle" onclick="toggleHierarchy('{{ cat.pk }}', this, '{{ cat.description|escapejs }}')" title="Buka Detail Hierarki">
+                                    <i class="material-icons">expand_more</i>
+                                </button>
+                                
+                                {% if cat.image %}
+                                <div style="flex-shrink: 0;">
+                                    <img src="{{ cat.image.url }}" alt="{{ cat.name }}" style="width: 80px; height: 45px; object-fit: contain; border-radius: 8px; border: 1px solid var(--glass-border); background: #fff; padding: 4px;">
+                                </div>
+                                {% else %}
+                                <div style="flex-shrink: 0; width: 80px; height: 45px; display: flex; align-items: center; justify-content: center; background: rgba(0,122,255,0.1); border-radius: 8px; color: var(--ios-blue); border: 1px solid var(--glass-border);">
+                                    <i class="material-icons">branding_watermark</i>
+                                </div>
+                                {% endif %}
+
+                                <div>
+                                    <span class="brand-name">{{ cat.name }}</span>
+                                    <p class="brand-desc" id="desc-{{ cat.pk }}">Memuat detail...</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            {% if cat.status == 1 %}
+                            <div class="status-pill active"><div class="dot"></div> Aktif</div>
+                            {% else %}
+                            <div class="status-pill inactive"><div class="dot"></div> Non-Aktif</div>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if request.user.is_superuser %}
+                            <div class="action-cell">
+                                <button class="btn-icon edit edit-data" data-id="{{ cat.pk }}" title="Edit">
+                                    <i class="material-icons" style="font-size: 20px;">edit</i>
+                                </button>
+                                <button class="btn-icon delete delete-data" data-id="{{ cat.pk }}" title="Hapus">
+                                    <i class="material-icons" style="font-size: 20px;">delete</i>
+                                </button>
+                            </div>
+                            {% else %}
+                            <span class="id-tag" style="font-size: 0.7rem; color: var(--ios-text-tertiary); box-shadow:none;">READ ONLY</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+
+                    <!-- Baris Expand (Hierarki Tipe & Seri) -->
+                    <tr id="child-{{ cat.pk }}" class="child-row" style="display: none;">
+                        <td colspan="4" style="padding: 0;">
+                            <div class="child-container" id="tree-canvas-{{ cat.pk }}"></div>
+                            
+                            <script type="application/json" id="data-{{ cat.pk }}">
+                                [{% for prod in cat.products_set.all %}{"name": "{{ prod.name|escapejs }}","stock": {{ prod.stock }}, "image": "{% if prod.image %}{{ prod.image.url }}{% endif %}"}{% if not forloop.last %},{% endif %}{% endfor %}]
+                            </script>
+                            <script type="application/json" id="types-{{ cat.pk }}">
+                                [{% for t in cat.types.all %}{"name": "{{ t.name|escapejs }}", "image": "{% if t.image %}{{ t.image.url }}{% endif %}"}{% if not forloop.last %},{% endif %}{% endfor %}]
+                            </script>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center py-5">
+                            <div style="padding: 40px 0;">
+                                <i class="material-icons" style="font-size: 56px; color: rgba(29, 29, 31, 0.2); margin-bottom: 16px;">view_in_ar</i>
+                                <h6 class="mb-1" style="color: var(--ios-text-primary); font-weight: 800; font-size:1.2rem;">Data Merek Kosong</h6>
+                                <p style="color: var(--ios-text-secondary); font-size: 0.9rem;">Silakan bentuk hierarki inventaris dengan menambahkan Merek Baru.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock pageContent %} 
+
+{% block ScriptBlock %}
+<script>
+    // =========================================================
+    // 1. Parsing Deskripsi Saat Load
+    // =========================================================
+    $(document).ready(function() {
+        {% for cat in category %}
+            (function() {
+                let rawText = `{{ cat.description|escapejs }}`;
+                let finalDesc = rawText;
+                if (rawText.includes('|||')) { finalDesc = rawText.split('|||')[0]; }
+                if(finalDesc.trim() === "") {
+                    $('#desc-{{ cat.pk }}').html("<i>Tanpa deskripsi merek.</i>").css("color", "var(--ios-text-tertiary)");
+                } else {
+                    $('#desc-{{ cat.pk }}').text(finalDesc);
+                }
+            })();
+        {% endfor %}
+    });
+
+    // =========================================================
+    // 2. Logika Tree View Generator (Struktur Rapi di Dalam Glass)
+    // =========================================================
+    function toggleHierarchy(id, btn, rawDesc) {
+        const childRow = document.getElementById('child-' + id);
+        
+        if (childRow.style.display === "none" || childRow.style.display === "") {
+            childRow.style.display = "table-row";
+            btn.classList.add("expanded");
+
+            const canvas = document.getElementById('tree-canvas-' + id);
+            
+            if (canvas.innerHTML.trim() === "") {
+                const products = JSON.parse(document.getElementById('data-' + id).textContent);
+                const typeObjects = JSON.parse(document.getElementById('types-' + id).textContent);
+                
+                // Fallback kompatibilitas untuk deskripsi lama
+                if (typeObjects.length === 0 && rawDesc.includes('|||')) {
+                    let typeStr = rawDesc.split('|||')[1];
+                    if(typeStr) { 
+                        typeStr.split(',').forEach(t => {
+                            if (t.trim()) typeObjects.push({name: t.trim(), image: ''});
+                        });
+                    }
+                }
+                
+                let html = `
+                <div class="tree-wrapper">
+                    <div class="tree-header">
+                        <span>Struktur Seri Produk</span>
+                        <span style="width: 100px; text-align: center;">Stok Unit</span>
+                    </div>
+                    <div class="tree-body">
+                `;
+                
+                if (products.length === 0) {
+                    html += `<div class="text-center py-3" style="color: var(--ios-text-tertiary); font-size:0.9rem;">Belum ada seri produk terdaftar pada merek ini.</div>`;
+                } else {
+                    let usedProducts = new Set();
+
+                    typeObjects.forEach(typeObj => {
+                        let typeName = typeObj.name;
+                        let matched = products.filter(p => p.name.toUpperCase().startsWith(typeName.toUpperCase()));
+                        
+                        if (matched.length > 0) {
+                            
+                            // Gunakan gambar spesifik tipe jika ada, jika tidak gunakan produk pertama
+                            let typeImg = typeObj.image;
+                            if (!typeImg) {
+                                for (let p of matched) { if (p.image) { typeImg = p.image; break; } }
+                            }
+                            
+                            let typeIconHtml = typeImg 
+                                ? `<img src="${typeImg}" style="width: 80px; height: 45px; object-fit: contain; border-radius: 6px; border: 1px solid var(--glass-border); background:#fff;">` 
+                                : `<div style="width: 80px; height: 45px; display:flex; align-items:center; justify-content:center; background:rgba(0,122,255,0.05); border-radius:6px; color:var(--ios-blue); border: 1px solid var(--glass-border);"><i class="material-icons" style="font-size:24px;">folder</i></div>`;
+
+                            html += `
+                            <div class="type-group">
+                                <div class="type-title" style="align-items: center;">${typeIconHtml} <span style="font-size: 1.1rem; margin-left: 6px;">${typeName}</span></div>
+                                <div class="series-list" style="margin-left: 40px; border-left: 2px solid rgba(0, 122, 255, 0.15); padding-left: 20px;">`;
+                                
+                            matched.forEach(p => {
+                                usedProducts.add(p.name);
+                                let seriesNameOnly = p.name.substring(typeName.length).trim();
+                                if(seriesNameOnly === "") seriesNameOnly = p.name;
+                                
+                                let prodImgHtml = p.image 
+                                    ? `<img src="${p.image}" style="width: 80px; height: 45px; object-fit: contain; border-radius: 6px; background: #fff; border: 1px solid var(--glass-border);">` 
+                                    : `<div style="width: 80px; height: 45px; display:flex; align-items:center; justify-content:center; background:rgba(0,122,255,0.05); border-radius:6px; color:var(--ios-blue); border: 1px solid var(--glass-border);"><i class="material-icons" style="font-size: 20px;">laptop</i></div>`;
+
+                                html += `
+                                    <div class="series-item" style="padding: 12px 16px; cursor: pointer;" onclick="location.href='{% url 'product-page' %}?search=${encodeURIComponent(p.name)}'" title="Lihat produk di katalog">
+                                        <div style="display:flex; align-items:center; gap: 16px;">
+                                            ${prodImgHtml}
+                                            <span class="series-name" style="font-size: 1rem;">Seri: <strong>${seriesNameOnly}</strong></span>
+                                        </div>
+                                        <span class="stock-tag ${p.stock > 0 ? 'available' : 'empty'}">${p.stock} Unit</span>
+                                    </div>`;
+                            });
+                            html += `</div></div>`;
+                        }
+                    });
+
+                    let others = products.filter(p => !usedProducts.has(p.name));
+                    if (others.length > 0) {
+                        html += `
+                        <div class="type-group">
+                            <div class="type-title" style="align-items: center;">
+                                <div style="width: 80px; height: 45px; display:flex; align-items:center; justify-content:center; background:rgba(0,122,255,0.05); border-radius:6px; color:var(--ios-blue); border: 1px solid var(--glass-border);"><i class="material-icons" style="font-size: 24px;">folder_open</i></div>
+                                <span style="font-size: 1.1rem; margin-left: 6px;">Umum / Lainnya</span>
+                            </div>
+                            <div class="series-list" style="margin-left: 40px; border-left: 2px solid rgba(0, 122, 255, 0.15); padding-left: 20px;">`;
+                            
+                        others.forEach(p => {
+                            let prodImgHtml = p.image 
+                                ? `<img src="${p.image}" style="width: 80px; height: 45px; object-fit: contain; border-radius: 6px; background: #fff; border: 1px solid var(--glass-border);">` 
+                                : `<div style="width: 80px; height: 45px; display:flex; align-items:center; justify-content:center; background:rgba(0,122,255,0.05); border-radius:6px; color:var(--ios-blue); border: 1px solid var(--glass-border);"><i class="material-icons" style="font-size: 20px;">laptop</i></div>`;
+                                
+                            html += `
+                                <div class="series-item" style="padding: 12px 16px; cursor: pointer;" onclick="location.href='{% url 'product-page' %}?search=${encodeURIComponent(p.name)}'" title="Lihat produk di katalog">
+                                    <div style="display:flex; align-items:center; gap: 16px;">
+                                        ${prodImgHtml}
+                                        <span class="series-name" style="font-size: 1rem;">Seri: <strong>${p.name}</strong></span>
+                                    </div>
+                                    <span class="stock-tag ${p.stock > 0 ? 'available' : 'empty'}">${p.stock} Unit</span>
+                                </div>`;
+                        });
+                        html += `</div></div>`;
+                    }
+                }
+                html += `</div></div>`;
+                canvas.innerHTML = html;
+            }
+        } else {
+            childRow.style.display = "none";
+            btn.classList.remove("expanded");
+        }
+    }
+
+    // =========================================================
+    // 3. Kontrol Modal Django POS
+    // =========================================================
+    $(function() {
+        $('#create_new').click(function() { uni_modal("Tambah Kategori", "{% url 'manage_category-page' %}") })
+        $('.edit-data').click(function() { uni_modal("Edit Merek", "{% url 'manage_category-page' %}?id=" + $(this).attr('data-id')) })
+        $('.delete-data').click(function() { _conf("Hapus merek ini beserta isinya?", "delete_category", [$(this).attr('data-id')]) })
+    })
+
+    function delete_category($id) {
+        start_loader();
+        $.ajax({
+            headers: { "X-CSRFToken": '{{csrf_token}}' },
+            url: "{% url 'delete-category' %}",
+            method: "POST",
+            data: { id: $id },
+            dataType: "json",
+            error: err => { console.log(err); alert_toast("Error Sistem.", 'error'); end_loader(); },
+            success: function(resp) {
+                if (typeof resp == 'object' && resp.status == 'success') { location.reload(); } 
+                else { alert_toast("Gagal menghapus.", 'error'); end_loader(); }
+            }
+        })
+    }
+</script>
+{% endblock ScriptBlock %}

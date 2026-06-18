@@ -1,0 +1,71 @@
+{% load i18n %}
+
+<style>
+    @keyframes logoGlowPulse {
+        0% { box-shadow: 0 0 5px rgba(0, 230, 118, 0.3); border: 2px solid rgba(0, 230, 118, 0.4); }
+        50% { box-shadow: 0 0 25px rgba(0, 230, 118, 0.8); border: 2px solid rgba(0, 230, 118, 1); }
+        100% { box-shadow: 0 0 5px rgba(0, 230, 118, 0.3); border: 2px solid rgba(0, 230, 118, 0.4); }
+    }
+
+    .eltech-logo { filter: none !important; background-color: #000000 !important; border-radius: 50% !important; padding: 0; object-fit: contain; animation: logoGlowPulse 2.5s infinite ease-in-out; }
+    html:not(.dark) .eltech-text { color: #111827 !important; }
+    html.dark .eltech-text { color: #f3f4f6 !important; }
+
+    /* Scroll System & Layout Alignment for Recent Actions */
+    #content-related { display: flex; flex-direction: column; }
+    #recent-actions-module {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+        margin-bottom: 1.5rem; /* Matches the mb-6 margin of the left modules */
+    }
+    #recent-actions-module ul.actionlist {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        padding-right: 8px;
+        /* Proper Flexbox Scrolling */
+        height: 0;
+        min-height: 0;
+        max-height: none;
+    }
+    
+    /* Custom Elegant Scrollbar */
+    #recent-actions-module ul.actionlist::-webkit-scrollbar {
+        width: 6px;
+    }
+    #recent-actions-module ul.actionlist::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    #recent-actions-module ul.actionlist::-webkit-scrollbar-thumb {
+        background: rgba(156, 163, 175, 0.5);
+        border-radius: 10px;
+    }
+    html.dark #recent-actions-module ul.actionlist::-webkit-scrollbar-thumb {
+        background: rgba(75, 85, 99, 0.5);
+    }
+</style>
+
+{% if site_icon %}
+    <div class="shrink-0">
+        <{% if site_dropdown %}span{% else %}a href="{% url "admin:index" %}"{% endif %}>
+            <img src="{{ site_icon }}" class="h-[38px] eltech-logo" alt="El-Tech Logo" />
+        </{% if site_dropdown %}span{% else %}a{% endif %}>
+    </div>
+{% else %}
+    <{% if site_dropdown %}span{% else %}a href="{% url "admin:index" %}"{% endif %} class="bg-primary-600 flex h-[38px] items-center justify-center rounded-default shrink-0 text-white text-xs w-[38px]">
+        <span class="material-symbols-outlined md-18">{% if site_symbol %}{{ site_symbol }}{% else %}settings{% endif %}</span>
+    </{% if site_dropdown %}span{% else %}a{% endif %}>
+{% endif %}
+
+<div class="flex flex-col grow justify-center min-w-0 ml-3">
+    <div class="eltech-text tracking-tight font-semibold *:truncate {% if site_subheader %}xl:text-sm{% else %}xl:text-base{% endif %}">
+        {{ branding }}
+    </div>
+
+    {% if site_subheader %}
+        <div class="text-subtle font-normal text-xs truncate" style="color: #6b7280;">
+            {{ site_subheader }}
+        </div>
+    {% endif %}
+</div>

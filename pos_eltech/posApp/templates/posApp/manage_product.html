@@ -1,0 +1,557 @@
+{% load l10n %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
+<style>
+    /* ============================================================ */
+    /* VARIABLES & BASE                                              */
+    /* ============================================================ */
+    :root {
+        --clr-primary: #2563eb;
+        --clr-primary-soft: #eff6ff;
+        --clr-border: #e2e8f0;
+        --clr-border-focus: #2563eb;
+        --clr-label: #64748b;
+        --clr-text: #1e293b;
+        --clr-surface: #ffffff;
+        --clr-bg: #f8fafc;
+        --clr-danger: #ef4444;
+        --clr-success: #16a34a;
+        --radius: 10px;
+        --shadow-sm: 0 1px 3px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.04);
+    }
+
+    /* ============================================================ */
+    /* FIX BUG SWEETALERT2 (GARIS & WARNA LATAR)                     */
+    /* ============================================================ */
+    .swal-premium-popup { 
+        border-radius: 16px !important; 
+        font-family: 'Segoe UI', system-ui, sans-serif !important; 
+        background-color: #ffffff !important; /* Paksa warna latar putih */
+    }
+    .swal-premium-title { 
+        font-weight: 800 !important; 
+        color: var(--clr-text) !important; 
+    }
+    
+    /* Menghilangkan bug garis putus-putus pada ikon success */
+    .swal2-success-circular-line-left,
+    .swal2-success-circular-line-right,
+    .swal2-success-fix {
+        background-color: #ffffff !important;
+    }
+
+    /* ============================================================ */
+    /* MODAL BACKDROP BLUR                                           */
+    /* ============================================================ */
+    .modal-backdrop.show {
+        backdrop-filter: blur(8px) !important;
+        -webkit-backdrop-filter: blur(8px) !important;
+        background-color: rgba(15, 23, 42, 0.45) !important;
+        opacity: 1 !important;
+    }
+
+    /* ============================================================ */
+    /* CROP OVERLAY                                                   */
+    /* ============================================================ */
+    #crop-editor-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0;
+        width: 100vw; height: 100vh;
+        background: rgba(15, 23, 42, 0.65);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        z-index: 99999 !important;
+        padding: 20px;
+        align-items: center;
+        justify-content: center;
+    }
+    .crop-editor-box {
+        background: #fff;
+        width: 100%;
+        max-width: 540px;
+        border-radius: 18px;
+        padding: 28px;
+        box-shadow: 0 32px 64px -12px rgba(0,0,0,.45);
+        display: flex;
+        flex-direction: column;
+    }
+    .crop-container {
+        width: 100%;
+        height: 340px;
+        background-color: #0f172a;
+        overflow: hidden;
+        border-radius: 12px;
+        margin-bottom: 20px;
+    }
+    .crop-container img { display: block; max-width: 100%; }
+
+    /* ============================================================ */
+    /* FORM WRAPPER                                                   */
+    /* ============================================================ */
+    .pf-wrapper {
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        color: var(--clr-text);
+    }
+
+    /* ---------- SECTION CARD ---------- */
+    .pf-card {
+        background: var(--clr-surface);
+        border: 1px solid var(--clr-border);
+        border-radius: 14px;
+        padding: 20px 22px;
+        margin-bottom: 14px;
+        box-shadow: var(--shadow-sm);
+    }
+    .pf-card-title {
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+        color: var(--clr-label);
+        margin-bottom: 16px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--clr-border);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .pf-card-title i { font-size: 15px; color: var(--clr-primary); }
+
+    /* ---------- FORM LABEL ---------- */
+    .pf-label {
+        display: block;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        color: var(--clr-label);
+        margin-bottom: 5px;
+    }
+
+    /* ---------- FORM CONTROL ---------- */
+    .pf-control {
+        width: 100%;
+        background: var(--clr-bg);
+        border: 1.5px solid var(--clr-border);
+        border-radius: var(--radius);
+        padding: 9px 12px;
+        font-size: 0.9rem;
+        color: var(--clr-text);
+        transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+        outline: none;
+        appearance: none;
+        -webkit-appearance: none;
+    }
+    .pf-control:focus {
+        border-color: var(--clr-border-focus);
+        background: var(--clr-surface);
+        box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+    }
+    textarea.pf-control { resize: vertical; min-height: 80px; }
+
+    /* select arrow */
+    select.pf-control {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        padding-right: 34px;
+    }
+
+    /* colour variants */
+    .pf-control.is-mono { font-family: 'Courier New', monospace; font-weight: 700; letter-spacing: 0.5px; }
+    .pf-control.clr-danger  { color: var(--clr-danger); }
+    .pf-control.clr-primary { color: var(--clr-primary); }
+    .pf-control.clr-success { color: var(--clr-success); }
+
+    /* ---------- FIELD GROUP (label + control stacked) ---------- */
+    .pf-field { display: flex; flex-direction: column; }
+
+    /* ---------- GRID ROWS ---------- */
+    .pf-row {
+        display: grid;
+        gap: 12px;
+        align-items: end;
+    }
+    .pf-row-2  { grid-template-columns: 1fr 1fr; }
+    .pf-row-3  { grid-template-columns: 1fr 1fr 1fr; }
+    .pf-row-4  { grid-template-columns: 1fr 1fr 1fr 1fr; }
+    .pf-row-53 { grid-template-columns: 5fr 7fr; }
+    @media (max-width: 600px) {
+        .pf-row-2, .pf-row-3, .pf-row-4, .pf-row-53 { grid-template-columns: 1fr; }
+    }
+
+    /* ---------- PHOTO + IDENTITY SIDE BY SIDE ---------- */
+    .pf-identity-row {
+        display: grid;
+        grid-template-columns: 140px 1fr;
+        gap: 16px;
+        align-items: start;
+    }
+    @media (max-width: 500px) {
+        .pf-identity-row { grid-template-columns: 1fr; }
+    }
+
+    /* ---------- UPLOAD AREA ---------- */
+    .pf-upload-area {
+        width: 140px;
+        aspect-ratio: 1 / 1;
+        border: 2px dashed var(--clr-border);
+        border-radius: 12px;
+        background: var(--clr-bg);
+        cursor: pointer;
+        overflow: hidden;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        transition: border-color 0.2s, background 0.2s;
+        flex-shrink: 0;
+    }
+    .pf-upload-area:hover { border-color: var(--clr-primary); background: var(--clr-primary-soft); }
+    #image-preview { width: 100%; height: 100%; object-fit: cover; }
+    .pf-upload-hint { text-align: center; padding: 8px; }
+    .pf-upload-hint i { font-size: 32px; color: #94a3b8; display: block; margin-bottom: 4px; }
+    .pf-upload-hint span { font-size: 0.72rem; color: #64748b; font-weight: 700; }
+
+</style>
+
+<!-- ============================================================ -->
+<!-- CROP OVERLAY                                                   -->
+<!-- ============================================================ -->
+<div class="container-fluid px-1 py-1">
+    <div id="crop-editor-overlay">
+        <div class="crop-editor-box">
+            <h5 class="fw-bold mb-3 text-dark d-flex align-items-center" style="font-size:1rem;">
+                <i class="material-icons me-2 text-primary" style="font-size:20px;">crop</i>
+                Sesuaikan Posisi Foto Produk
+            </h5>
+            <div class="crop-container"><img id="image-to-crop" src=""></div>
+            <div class="d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-light fw-bold text-secondary" id="btn-cancel-crop">Batal</button>
+                <button type="button" class="btn btn-primary fw-bold" id="btn-apply-crop">
+                    <i class="material-icons" style="font-size:16px;vertical-align:middle;">check</i>
+                    Terapkan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- FORM                                                          -->
+    <!-- ============================================================ -->
+    <form action="" id="product-form" enctype="multipart/form-data" class="pf-wrapper">
+        <input type="hidden" name="id" value="{% if product.pk %}{{product.pk}}{% endif %}">
+        <input type="hidden" name="name" id="real_name" value="{% if product.name %}{{product.name}}{% endif %}">
+
+        <!-- ── SECTION 1: IDENTITAS PRODUK ── -->
+        <div class="pf-card">
+            <div class="pf-card-title">
+                <i class="material-icons">inventory_2</i>
+                Identitas Produk
+            </div>
+
+            <div class="pf-identity-row">
+                <!-- Foto -->
+                <div>
+                    <label class="pf-label" style="text-align:center;display:block;margin-bottom:8px;">Foto</label>
+                    <div class="pf-upload-area" id="upload-area" title="Klik untuk memilih foto">
+                        <img id="image-preview"
+                             src="{% if product.image %}{{ product.image.url }}{% endif %}"
+                             style="{% if not product.image %}display:none;{% endif %}">
+                        <div class="pf-upload-hint" id="upload-text"
+                             style="{% if product.image %}display:none;{% endif %}">
+                            <i class="material-icons">add_photo_alternate</i>
+                            <span>Pilih Foto</span>
+                        </div>
+                    </div>
+                    <input type="file" name="image" id="image" class="d-none" accept="image/*">
+                </div>
+
+                <!-- SKU + Merek stacked vertically -->
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                    <div class="pf-field">
+                        <label for="code" class="pf-label">Kode SKU</label>
+                        <input type="text" name="code" id="code"
+                               class="pf-control is-mono"
+                               value="{% if product.code %}{{product.code}}{% endif %}"
+                               maxlength="10"
+                               required placeholder="Masukkan kode…">
+                    </div>
+                    <div class="pf-field">
+                        <label for="category_id" class="pf-label">Merek / Kategori</label>
+                        <select name="category_id" id="category_id" class="pf-control" required>
+                            <option value="" disabled {% if not product.category_id %}selected{% endif %}>Pilih merek…</option>
+                            {% for category in categories %}
+                                <option value="{{ category.id }}"
+                                        data-types="{% for t in category.types.all %}{{ t.name }}{% if not forloop.last %},{% endif %}{% endfor %}"
+                                        {% if product.category_id.id == category.id %}selected{% endif %}>
+                                    {{ category.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── SECTION 2: TIPE & SERI ── -->
+        <div class="pf-card">
+            <div class="pf-card-title">
+                <i class="material-icons">label</i>
+                Tipe &amp; Seri Produk
+            </div>
+
+            <div class="pf-row pf-row-53">
+                <div class="pf-field">
+                    <label for="product_type" class="pf-label" style="color:var(--clr-primary);">Tipe</label>
+                    <select id="product_type" class="pf-control clr-primary" style="font-weight:700;">
+                        <option value="UMUM" selected>-- Pilih Merek Dulu --</option>
+                    </select>
+                </div>
+                <div class="pf-field">
+                    <label for="product_series" class="pf-label">Nama Seri</label>
+                    <input type="text" id="product_series" class="pf-control" maxlength="30">
+                </div>
+            </div>
+        </div>
+
+        <!-- ── SECTION 3: DESKRIPSI ── -->
+        <div class="pf-card">
+            <div class="pf-card-title">
+                <i class="material-icons">notes</i>
+                Deskripsi &amp; Spesifikasi
+            </div>
+            <div class="pf-field">
+                <textarea name="description" id="description" class="pf-control"
+                          required placeholder="Spesifikasi bahan, ukuran, prosesor, dll.">{% if product.description %}{{product.description}}{% endif %}</textarea>
+            </div>
+        </div>
+
+        <!-- ── SECTION 4: HARGA, STOK, GARANSI, STATUS ── -->
+        <div class="pf-card">
+            <div class="pf-card-title">
+                <i class="material-icons">tune</i>
+                Harga, Stok &amp; Status
+            </div>
+
+            <div class="pf-row pf-row-4">
+                <div class="pf-field">
+                    <label for="price" class="pf-label" style="color:var(--clr-danger);">Harga Jual</label>
+                    <input type="number" step="0.01" name="price" id="price"
+                           class="pf-control is-mono clr-danger"
+                           value="{% if product.price %}{{product.price|unlocalize}}{% endif %}"
+                           required placeholder="0">
+                </div>
+                <div class="pf-field">
+                    <label for="stock" class="pf-label" style="color:var(--clr-primary);">Stok</label>
+                    <input type="number" name="stock" id="stock"
+                           class="pf-control is-mono clr-primary"
+                           value="{% if product.stock %}{{product.stock}}{% else %}0{% endif %}"
+                           required placeholder="0">
+                </div>
+                <div class="pf-field">
+                    <label for="warranty" class="pf-label" style="color:var(--clr-success);">Garansi</label>
+                    <input type="number" name="warranty" id="warranty"
+                           class="pf-control is-mono clr-success"
+                           value="{% if product.warranty %}{{product.warranty}}{% else %}0{% endif %}"
+                           required placeholder="0">
+                </div>
+                <div class="pf-field">
+                    <label for="status" class="pf-label">Status</label>
+                    <select name="status" id="status" class="pf-control" required>
+                        <option value="1" {% if product.status == 1 or not product.status %}selected{% endif %}>Aktif</option>
+                        <option value="0" {% if product.status == 0 %}selected{% endif %}>Tidak Aktif</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+    </form>
+</div>
+
+<script>
+    $(function() {
+        // =======================================================
+        // LOGIKA PEMISAHAN TIPE & SERI
+        // =======================================================
+        $('#category_id').change(function() {
+            let typesStr = $(this).find(':selected').data('types') || "";
+            let typeSelect = $('#product_type');
+            typeSelect.empty();
+
+            let currentRealNameOriginal = $('#real_name').val() || "";
+            let currentRealNameUpper = currentRealNameOriginal.toUpperCase();
+            let matchedType = "";
+            let matchedTypeLength = 0;
+
+            if (typesStr && typesStr.trim() !== '') {
+                let types = typesStr.split(',');
+                types.forEach(t => {
+                    let typeText = t.trim().toUpperCase();
+                    if (typeText.length > 0) {
+                        let isSelected = "";
+                        if (currentRealNameUpper.startsWith(typeText)) {
+                            isSelected = "selected";
+                            matchedType = typeText;
+                            matchedTypeLength = typeText.length;
+                        }
+                        typeSelect.append(`<option value="${typeText}" ${isSelected}>${typeText}</option>`);
+                    }
+                });
+            }
+
+            let umumSelected = (currentRealNameUpper !== "" && matchedType === "") ? "selected" : "";
+            typeSelect.append(`<option value="UMUM" ${umumSelected}>-- Tanpa Tipe / Umum --</option>`);
+
+            if (currentRealNameOriginal) {
+                if (matchedType !== "") {
+                    let seriesOnly = currentRealNameOriginal.substring(matchedTypeLength).trim();
+                    $('#product_series').val(seriesOnly);
+                } else {
+                    $('#product_series').val(currentRealNameOriginal);
+                }
+            } else {
+                $('#product_series').val('');
+            }
+            updateSeriesMaxLength();
+        });
+
+        function updateSeriesMaxLength() {
+            let chosenType = $('#product_type').val() || "";
+            let baseLen = chosenType === "UMUM" ? 0 : chosenType.length + 1;
+            let maxAllowed = 30 - baseLen;
+            if (maxAllowed < 0) maxAllowed = 0;
+            
+            // Potong teks jika sudah terlanjur melebihi batas baru
+            let currentVal = $('#product_series').val();
+            if (currentVal.length > maxAllowed) {
+                $('#product_series').val(currentVal.substring(0, maxAllowed));
+            }
+            
+            $('#product_series').attr('maxlength', maxAllowed);
+        }
+
+        $('#product_type').on('change', updateSeriesMaxLength);
+
+        setTimeout(() => { $('#category_id').trigger('change'); }, 150);
+
+        // =======================================================
+        // LOGIKA CROPPER JS & IMAGE UPLOAD
+        // =======================================================
+        let cropper = null;
+        let finalCroppedBlob = null;
+
+        $('#upload-area').off('click').on('click', function() { $('#image').click(); });
+        $('#image').off('click').on('click', function() { this.value = null; });
+
+        $('#image').off('change').on('change', function() {
+            var input = this;
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#image-to-crop').attr('src', e.target.result);
+                    $('#crop-editor-overlay').css('display', 'flex');
+                    if (cropper) { cropper.destroy(); cropper = null; }
+                    setTimeout(() => {
+                        cropper = new Cropper(document.getElementById('image-to-crop'), {
+                            aspectRatio: 1 / 1,
+                            viewMode: 2,
+                            dragMode: 'move',
+                            autoCropArea: 1,
+                            checkOrientation: false
+                        });
+                    }, 200);
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        });
+
+        $('#btn-cancel-crop').off('click').on('click', function() {
+            if (cropper) { cropper.destroy(); cropper = null; }
+            $('#crop-editor-overlay').hide();
+            $('#image').val('');
+        });
+
+        $('#btn-apply-crop').off('click').on('click', function() {
+            if (!cropper) return;
+            let canvas = cropper.getCroppedCanvas({ width: 600, height: 600, imageSmoothingEnabled: true, imageSmoothingQuality: 'high' });
+            if (!canvas) { alert_toast("Gagal memproses gambar.", "warning"); return; }
+            canvas.toBlob(function(blob) {
+                finalCroppedBlob = blob;
+                $('#image-preview').attr('src', URL.createObjectURL(blob)).show();
+                $('#upload-text').hide();
+                cropper.destroy(); cropper = null;
+                $('#crop-editor-overlay').hide();
+            }, 'image/jpeg', 0.9);
+        });
+
+        // =======================================================
+        // SUBMIT FORM AJAX
+        // =======================================================
+        $('#product-form').off('submit').on('submit', function(e) {
+            e.preventDefault();
+            var _this = $(this);
+            $('.err-msg').remove();
+
+            let chosenType = $('#product_type').val();
+            let seriesValue = $('#product_series').val().trim();
+
+            if (chosenType === "UMUM") {
+                $('#real_name').val(seriesValue);
+            } else {
+                $('#real_name').val(chosenType + " " + seriesValue);
+            }
+
+            if (_this[0].checkValidity() == false) { _this[0].reportValidity(); return false; }
+
+            start_loader();
+            let formData = new FormData($(this)[0]);
+            if (finalCroppedBlob) { formData.set('image', finalCroppedBlob, 'product_cropped.jpg'); }
+
+            $.ajax({
+                headers: { "X-CSRFToken": '{{csrf_token}}' },
+                url: "{% url 'save-product-page' %}",
+                data: formData, cache: false, contentType: false, processData: false,
+                method: 'POST', type: 'POST', dataType: 'json',
+                error: err => {
+                    console.log(err);
+                    Swal.fire({ icon: 'error', title: 'Oops...', text: 'Terjadi kesalahan teknis server.' });
+                    end_loader();
+                },
+                success: function(resp) {
+                    if (resp.status == 'success') {
+                        end_loader();
+                        $('#uni_modal').modal('hide');
+                        
+                        setTimeout(() => {
+                            Swal.fire({
+                                icon: 'success', 
+                                title: 'Berhasil Tersimpan!',
+                                text: 'Data produk dan stok telah diperbarui di sistem.',
+                                showConfirmButton: false, 
+                                timer: 1500,
+                                customClass: { 
+                                    popup: 'swal-premium-popup',
+                                    title: 'swal-premium-title'
+                                , confirmButton: 'swal-premium-confirm', cancelButton: 'swal-premium-cancel' },
+                                didOpen: () => { 
+                                    document.querySelector('.swal2-container').style.zIndex = '999999'; 
+                                }
+                            }).then(() => { 
+                                location.reload(); 
+                            });
+                        }, 300);
+                        
+                    } else {
+                        var el = $('<div>').addClass("alert alert-danger err-msg mt-2").text(resp.msg || "Gagal menyimpan.");
+                        _this.prepend(el); el.show('slow'); end_loader();
+                        $("#uni_modal").animate({ scrollTop: 0 }, "slow");
+                    }
+                }
+            });
+        });
+    });
+</script>

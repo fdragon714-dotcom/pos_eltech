@@ -1,0 +1,411 @@
+<style>
+    /* --- EFEK BLUR LINGKUNGAN (BACKGROUND MODAL) --- */
+    body .modal-backdrop.show {
+        backdrop-filter: blur(8px) !important;
+        -webkit-backdrop-filter: blur(8px) !important;
+        background-color: rgba(15, 23, 42, 0.4) !important; /* Warna gelap transparan */
+        opacity: 1 !important;
+    }
+
+    /* Efek kaca (Glassmorphism) pada form modal */
+    .modal-content {
+        background: rgba(255, 255, 255, 0.95) !important;
+        backdrop-filter: blur(15px) !important;
+        -webkit-backdrop-filter: blur(15px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.8) !important;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    /* --- MODERN FORM STYLES --- */
+    .mdrn-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: #64748b;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .mdrn-input, .mdrn-select {
+        border-radius: 10px !important;
+        border: 1px solid #e2e8f0;
+        padding: 12px 16px;
+        font-size: 0.95rem;
+        color: #0f172a;
+        background-color: #f8fafc;
+        transition: all 0.2s ease-in-out;
+        width: 100%;
+    }
+
+    .mdrn-input::placeholder {
+        color: #94a3b8;
+        font-size: 0.85rem;
+    }
+
+    .mdrn-input:focus, .mdrn-select:focus {
+        background-color: #ffffff;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+        outline: none;
+    }
+
+    /* Custom Dropdown Arrow */
+    .mdrn-select {
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 14px center;
+        background-size: 16px;
+        padding-right: 40px;
+    }
+
+    /* --- GAYA KHUSUS CHIP INPUT TIPE --- */
+    .type-chip-container { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+    .type-chip {
+        background: #e0f2fe; color: #0369a1; padding: 6px 12px; border-radius: 6px; 
+        font-size: 0.8rem; font-weight: 600; display: flex; align-items: center; gap: 8px; border: 1px solid #bae6fd; 
+    }
+    .type-chip span {
+        cursor: pointer; color: #ef4444; font-weight: bold; background: #fff; border-radius: 50%; 
+        width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; 
+    }
+    .type-chip span:hover { background: #ef4444; color: #fff; }
+</style>
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
+<!-- CROP OVERLAY -->
+<div id="cropOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.85); z-index: 10500; align-items: center; justify-content: center; backdrop-filter: blur(8px);">
+    <div style="width: 90%; max-width: 700px; background: #fff; border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); overflow: hidden; display: flex; flex-direction: column;">
+        
+        <!-- Header -->
+        <div style="padding: 16px 24px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
+            <h5 style="margin: 0; font-weight: 700; color: #0f172a; font-size: 1.1rem;"><i class="material-icons align-middle me-2" style="color: #3b82f6;">crop</i> Sesuaikan Gambar</h5>
+            <button type="button" style="background: none; border: none; color: #64748b; cursor: pointer;" onclick="$('#btnCancelCrop').click()"><i class="material-icons">close</i></button>
+        </div>
+
+        <!-- Crop Area -->
+        <div style="height: 50vh; width: 100%; background: #0f172a; position: relative; overflow: hidden; display: flex; justify-content: center; align-items: center;">
+            <img id="cropImage" style="max-width: 100%; max-height: 100%; display: block;">
+        </div>
+
+        <!-- Footer / Controls -->
+        <div style="padding: 16px 24px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; align-items: center; gap: 12px;">
+            <button type="button" class="btn btn-light px-4 fw-bold d-flex align-items-center justify-content-center" id="btnCancelCrop" style="border-radius: 10px; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; height: 42px; min-width: 100px;">Batal</button>
+            <button type="button" class="btn btn-primary px-4 fw-bold d-flex align-items-center justify-content-center" id="btnApplyCrop" style="border-radius: 10px; background: #3b82f6; color: #ffffff; border: none; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3); height: 42px; min-width: 100px; gap: 6px;">
+                Simpan
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<div class="container-fluid px-2 py-2">
+    <form action="" id="category-form" enctype="multipart/form-data">
+        <input type="hidden" name="id" value="{% if category.pk %}{{category.pk}}{% endif %}">
+        <input type="hidden" name="description" id="hidden_description">
+        
+        <div class="form-group mb-4">
+            <label for="name" class="mdrn-label">Nama Brand</label>
+            <input type="text" name="name" id="name" class="form-control mdrn-input fw-bold" value="{% if category.name %}{{category.name}}{% endif %}" placeholder="Contoh: LENOVO, ASUS, HP" required, maxlength="15">
+        </div>
+        
+        <div class="form-group mb-4">
+            <label for="real_desc" class="mdrn-label">Deskripsi Brand</label>
+            <textarea rows="3" id="real_desc" class="form-control mdrn-input" placeholder="Tuliskan keterangan singkat mengenai brand ini..." required></textarea>
+        </div>
+
+        <div class="form-group mb-4">
+            <label for="image" class="mdrn-label">Gambar/Logo Brand</label>
+            <input type="file" id="image" class="form-control mdrn-input" accept="image/*">
+            <div class="mt-2" id="brand-preview-container" style="{% if not category.image %}display:none;{% endif %}">
+                <small class="text-muted d-block mb-1">Logo saat ini:</small>
+                <img id="brand-preview-img" src="{% if category.image %}{{ category.image.url }}{% endif %}" alt="Logo Brand" style="height: 45px; width: 80px; object-fit: contain; border-radius: 6px; border: 1px solid #e2e8f0; background: #fff;">
+            </div>
+        </div>
+
+        <div class="form-group mb-4 p-3" style="background: #f8fafc; border-radius: 12px; border: 1px dashed #cbd5e1;">
+            <label for="type_input" class="mdrn-label text-primary">Daftar Tipe Laptop & Logo</label>
+            
+            <div id="type_list_display" class="d-flex flex-column gap-3 mb-3"></div>
+            
+            <div class="d-flex gap-2">
+                <input type="text" id="type_input" class="form-control mdrn-input" placeholder="Ketik nama tipe (Misal: TUF Gaming) lalu Enter" maxlength="30">
+                <button type="button" id="btn_add_type" class="btn btn-primary btn-sm" style="border-radius: 10px; font-weight: bold; padding: 0 20px;">Tambah</button>
+            </div>
+        </div>
+        
+        <div class="form-group mb-2">
+            <label for="status" class="mdrn-label">Status Kategori</label>
+            <select name="status" id="status" class="form-select mdrn-select" required>
+                {% if category.status == 1 %}
+                <option value="1" selected>Aktif (Ditampilkan)</option>
+                <option value="0">Non-Aktif (Disembunyikan)</option>
+                {% elif category.status == 0 %}
+                <option value="1">Aktif (Ditampilkan)</option>
+                <option value="0" selected>Non-Aktif (Disembunyikan)</option>
+                {% else %}
+                <option value="1" selected>Aktif (Ditampilkan)</option>
+                <option value="0">Non-Aktif (Disembunyikan)</option>
+                {% endif %}
+            </select>
+        </div>
+    </form>
+</div>
+
+<script>
+    $(function() {
+        // Pindahkan cropOverlay ke body utama untuk menghindari terpotong oleh CSS Transform pada modal
+        if ($('#cropOverlay').parent().prop('tagName') !== 'BODY') {
+            $('#cropOverlay').appendTo('body');
+        }
+
+        // =========================================================
+        // 1. EKSTRAK DATA SAAT MODE EDIT
+        // =========================================================
+        let rawDesc = `{% if category.description %}{{category.description|escapejs}}{% endif %}`;
+        let actualDesc = rawDesc;
+        if (rawDesc.includes('|||')) { actualDesc = rawDesc.split('|||')[0]; }
+        $('#real_desc').val(actualDesc);
+
+        let typeArray = [];
+        {% for t in category_types %}
+            typeArray.push({
+                name: "{{ t.name|escapejs }}",
+                imgUrl: "{% if t.image %}{{ t.image.url }}{% endif %}",
+                fileObj: null
+            });
+        {% endfor %}
+        
+        // Kompatibilitas untuk data lama yang belum dipindah ke tabel CategoryType
+        if (rawDesc.includes('|||') && typeArray.length === 0) {
+            let parts = rawDesc.split('|||');
+            if (parts[1] && parts[1].trim() !== "") {
+                parts[1].split(',').forEach(t => {
+                    if (t.trim()) typeArray.push({name: t.trim(), imgUrl: '', fileObj: null});
+                });
+            }
+        }
+        
+        renderTypes();
+
+        let cropper = null;
+        let cropIndex = -1; // -1: none, 'brand': logo brand, numeric: index tipe
+        let brandFileObj = null;
+
+        // BIND BRAND IMAGE INPUT
+        $('#image').on('change', function(e) {
+            if (e.target.files.length > 0) {
+                let file = e.target.files[0];
+                let url = URL.createObjectURL(file);
+                
+                cropIndex = 'brand';
+                $('#cropImage').attr('src', url);
+                $('#cropOverlay').css('display', 'flex');
+                
+                if (cropper) { cropper.destroy(); }
+                
+                cropper = new Cropper(document.getElementById('cropImage'), {
+                    aspectRatio: 16 / 9,
+                    viewMode: 1,
+                    dragMode: 'move',
+                    background: false,
+                    autoCropArea: 0.9,
+                    cropBoxMovable: true,
+                    cropBoxResizable: true,
+                    toggleDragModeOnDblclick: false,
+                });
+                
+                $(this).val(''); // Reset
+            }
+        });
+
+        // =========================================================
+        // 2. LOGIKA INPUT TIPE DAN GAMBAR
+        // =========================================================
+        $('#type_input').on('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ',') {
+                e.preventDefault();
+                addType();
+            }
+        });
+        
+        $('#btn_add_type').click(function() { addType(); });
+        
+        function addType() {
+            let inputEl = $('#type_input');
+            let newType = inputEl.val().trim().replace(/,/g, '');
+            if (newType !== "" && !typeArray.some(t => t.name === newType)) {
+                typeArray.push({name: newType, imgUrl: '', fileObj: null});
+                renderTypes();
+            }
+            inputEl.val('');
+        }
+
+        function renderTypes() {
+            let container = $('#type_list_display');
+            container.empty();
+            
+            typeArray.forEach((typeObj, index) => {
+                let currentImg = typeObj.imgUrl ? `<img src="${typeObj.imgUrl}" style="height: 36px; width: 64px; object-fit: contain; border-radius: 4px; background: #fff; border: 1px solid #e2e8f0; margin-right: 10px;">` : '';
+                
+                let html = `
+                <div class="d-flex align-items-center justify-content-between p-2" style="background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;">
+                    <div class="d-flex align-items-center flex-grow-1">
+                        ${currentImg}
+                        <span class="fw-bold" style="color: #0f172a; min-width: 120px;">${typeObj.name}</span>
+                        <input type="file" id="file_type_${index}" class="form-control form-control-sm ms-2" accept="image/*" style="max-width: 200px; font-size:0.75rem;">
+                    </div>
+                    <button type="button" class="btn btn-sm text-danger border-0 ms-2" data-idx="${index}" title="Hapus"><i class="material-icons" style="font-size:18px; margin-top:2px;">delete</i></button>
+                </div>
+                `;
+                let row = $(html);
+                
+                row.find(`button`).click(function() {
+                    typeArray.splice($(this).data('idx'), 1);
+                    renderTypes();
+                });
+                
+                row.find(`input[type="file"]`).on('change', function(e) {
+                    if (e.target.files.length > 0) {
+                        let file = e.target.files[0];
+                        let url = URL.createObjectURL(file);
+                        
+                        cropIndex = index;
+                        $('#cropImage').attr('src', url);
+                        $('#cropOverlay').css('display', 'flex');
+                        
+                        if (cropper) { cropper.destroy(); }
+                        
+                        // Inisialisasi Cropper dengan Rasio 16:9 yang Fleksibel
+                        cropper = new Cropper(document.getElementById('cropImage'), {
+                            aspectRatio: 16 / 9,
+                            viewMode: 1,
+                            dragMode: 'move', // Mengizinkan geser-geser gambar
+                            background: false,
+                            autoCropArea: 0.9,
+                            cropBoxMovable: true, // Mengizinkan geser kotak
+                            cropBoxResizable: true, // Mengizinkan atur ukuran kotak
+                            toggleDragModeOnDblclick: false,
+                        });
+                        
+                        $(this).val(''); // Reset input
+                    }
+                });
+                
+                container.append(row);
+            });
+        }
+        
+        // Logika Tombol Modal Crop
+        $('#btnCancelCrop').click(function() {
+            $('#cropOverlay').hide();
+            if(cropper) { cropper.destroy(); cropper = null; }
+            cropIndex = -1;
+        });
+
+        $('#btnApplyCrop').click(function() {
+            if (cropper && cropIndex !== -1) {
+                $(this).html('<i class="material-icons" style="font-size:18px;">hourglass_empty</i> Memproses...');
+                cropper.getCroppedCanvas({
+                    width: 800,
+                    height: 450,
+                    imageSmoothingEnabled: true,
+                    imageSmoothingQuality: 'high'
+                }).toBlob(function(blob) {
+                    let file = new File([blob], "cropped_logo.png", { type: "image/png" });
+                    let objectUrl = URL.createObjectURL(blob);
+                    
+                    if (cropIndex === 'brand') {
+                        brandFileObj = file;
+                        $('#brand-preview-img').attr('src', objectUrl);
+                        $('#brand-preview-container').show();
+                    } else {
+                        typeArray[cropIndex].fileObj = file;
+                        typeArray[cropIndex].imgUrl = objectUrl;
+                        renderTypes();
+                    }
+                    
+                    $('#cropOverlay').hide();
+                    $('#btnApplyCrop').html('Simpan');
+                    cropper.destroy();
+                    cropper = null;
+                    cropIndex = -1;
+                }, 'image/png');
+            }
+        });
+
+        // =========================================================
+        // 3. SUBMIT FORM AJAX
+        // =========================================================
+        $('#category-form').submit(function(e) {
+            e.preventDefault();
+            var _this = $(this)
+            $('.err-msg').remove();
+            
+            let finalDesc = $('#real_desc').val();
+            $('#hidden_description').val(finalDesc);
+            
+            let fd = new FormData($(this)[0]);
+            
+            // Masukkan nama-nama tipe
+            let typeNames = typeArray.map(t => t.name).join('|||');
+            fd.append('type_names_list', typeNames);
+            
+            // Masukkan file masing-masing tipe
+            typeArray.forEach((t, idx) => {
+                if (t.fileObj) {
+                    fd.append(`type_img_${idx}`, t.fileObj);
+                }
+            });
+            
+            // Masukkan file brand jika ada perubahan
+            if (brandFileObj) {
+                fd.append('image', brandFileObj);
+            }
+            
+            var el = $('<div>')
+            el.addClass("alert alert-danger err-msg mt-3")
+            el.css({"border-radius": "10px", "font-weight": "600", "font-size": "0.9rem"})
+            el.hide()
+            
+            if (_this[0].checkValidity() == false) {
+                _this[0].reportValidity();
+                return false;
+            }
+            
+            start_loader();
+            $.ajax({
+                headers: { "X-CSRFToken": '{{csrf_token}}' },
+                url: "{% url 'save-category-page' %}",
+                data: fd,
+                cache: false, contentType: false, processData: false,
+                method: 'POST', type: 'POST', dataType: 'json',
+                error: err => {
+                    console.log(err)
+                    alert_toast("Terjadi kesalahan pada sistem", 'error');
+                    end_loader();
+                },
+                success: function(resp) {
+                    if (typeof resp == 'object' && resp.status == 'success') {
+                        el.removeClass("alert alert-danger err-msg")
+                        location.reload()
+                    } else if (resp.status == 'failed' && !!resp.msg) {
+                        el.text(resp.msg)
+                    } else {
+                        el.text("Terjadi kesalahan pada sistem", 'error');
+                        end_loader();
+                        console.err(resp)
+                    }
+                    _this.prepend(el)
+                    el.show('slow')
+                    $("html, body, .modal").scrollTop(0);
+                    end_loader()
+                }
+            })
+        })
+    })
+</script>

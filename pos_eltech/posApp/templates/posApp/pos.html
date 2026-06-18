@@ -1,0 +1,964 @@
+{% extends "posApp/base.html" %} 
+{% load humanize %} 
+{% block pageContent %}
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<style>
+/* =========================================================
+   EL-TECH POS — Fresh Skin (Layout Preserved)
+   Font: Sora + Space Mono
+   Palette: Warm Slate · Electric Violet · Crisp White
+   ========================================================= */
+:root {
+  --bg:        #f0eff4;
+  --surface:   #ffffff;
+  --border:    #e2dff0;
+  --text:      #1c1830;
+  --sub:       #6b6585;
+  --muted:     #a09ab8;
+  --accent:    #6d28d9;
+  --accent-lt: #7c3aed;
+  --accent-bg: #f3f0ff;
+  --success:   #059669;
+  --danger:    #dc2626;
+  --night:     #13111e;
+  --night2:    #1e1b2e;
+  --night3:    #2d2848;
+  --mono:      'Space Mono', monospace;
+  --sans:      'Sora', sans-serif;
+  --rad:       12px;
+  --rad-sm:    8px;
+  --rad-pill:  100px;
+  --sh-sm:     0 1px 4px rgba(28,24,48,.06), 0 1px 2px rgba(28,24,48,.04);
+  --sh-md:     0 4px 18px rgba(28,24,48,.09), 0 2px 4px rgba(28,24,48,.04);
+  --sh-accent: 0 6px 22px rgba(109,40,217,.3);
+  --ease:      all 0.2s cubic-bezier(.4,0,.2,1);
+}
+
+* { box-sizing: border-box; }
+
+body { font-family: var(--sans); background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar          { width: 5px; }
+::-webkit-scrollbar-track    { background: transparent; }
+::-webkit-scrollbar-thumb    { background: #cdc8df; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #ada6c8; }
+
+/* ── Animations ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes qrisPop {
+  from { opacity: 0; transform: scale(.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* =========================================================
+   MDC CARD SHELL
+   ========================================================= */
+.mdc-card {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin-bottom: 20px;
+}
+.mdc-layout-grid__cell { animation: fadeUp .55s cubic-bezier(.16,1,.3,1) both; }
+
+/* =========================================================
+   POS LABEL
+   ========================================================= */
+.pos-label {
+  font-size: .68rem; font-weight: 700; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .07em; margin-bottom: 6px; display: block;
+}
+
+/* =========================================================
+   INPUTS / SELECTS
+   ========================================================= */
+.form-control,
+.form-select,
+.select2-container--default .select2-selection--single {
+  background: var(--bg) !important;
+  border: 1.5px solid var(--border) !important;
+  box-shadow: none !important;
+  border-radius: var(--rad-sm) !important;
+  padding: 8px 14px !important;
+  height: 42px !important;
+  font-family: var(--sans) !important;
+  font-weight: 600 !important;
+  font-size: .85rem !important;
+  color: var(--text) !important;
+  transition: var(--ease);
+}
+.form-control:focus,
+.form-select:focus,
+.select2-container--open .select2-selection--single {
+  border-color: var(--accent-lt) !important;
+  background: #fff !important;
+  box-shadow: 0 0 0 3px rgba(124,58,237,.12) !important;
+  outline: none;
+}
+.form-control::placeholder { color: var(--muted); font-weight: 400; }
+
+/* =========================================================
+   CUSTOMER FIELDSET
+   ========================================================= */
+.mb-4.p-3.shadow-sm {
+  background: var(--surface) !important;
+  border: 1.5px solid var(--border) !important;
+  border-radius: var(--rad) !important;
+  box-shadow: var(--sh-sm) !important;
+}
+.mb-4.p-3.shadow-sm h6 {
+  font-size: .8rem !important;
+  font-weight: 800 !important;
+  color: var(--accent) !important;
+  letter-spacing: .04em;
+}
+#jam-digital {
+  font-family: var(--mono);
+  font-size: .72rem;
+  font-weight: 700;
+  color: var(--accent-lt);
+  background: var(--accent-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--rad-pill);
+  padding: 4px 12px;
+}
+
+/* =========================================================
+   SECTION TITLE (LEFT PANEL)
+   ========================================================= */
+h6.fw-bold.text-dark {
+  font-family: var(--sans) !important;
+  font-size: 1rem !important;
+  font-weight: 800 !important;
+  color: var(--text) !important;
+}
+
+/* =========================================================
+   FILTER BAR (SELARAS DENGAN TEMA PRODUK)
+   ========================================================= */
+.filter-pos-wrapper {
+    background: var(--bg); 
+    border-radius: var(--rad);
+    padding: 16px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--border);
+}
+
+.filter-pos-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--accent-lt); 
+}
+
+.filter-header-pos {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text);
+    gap: 6px;
+}
+
+.filter-controls-pos {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.filter-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: var(--surface); 
+    border-radius: var(--rad-sm);
+    box-shadow: var(--sh-sm);
+    transition: var(--ease);
+    border: 1px solid transparent;
+}
+
+.filter-group:focus-within {
+    border-color: var(--accent-lt);
+    box-shadow: 0 0 0 3px rgba(124,58,237,.15);
+}
+
+.filter-group > i.icon-prefix {
+    position: absolute;
+    left: 14px;
+    color: var(--muted);
+    font-size: 18px;
+    pointer-events: none;
+    transition: var(--ease);
+}
+
+.filter-group:focus-within > i.icon-prefix {
+    color: var(--accent-lt);
+}
+
+.filter-group input, .filter-group select {
+    width: 100%;
+    border: none !important;
+    background: transparent !important;
+    padding: 10px 14px 10px 42px !important;
+    font-size: 0.82rem !important;
+    color: var(--text) !important;
+    font-weight: 600 !important;
+    font-family: var(--sans) !important;
+    outline: none;
+    appearance: none;
+    height: 42px !important;
+    box-shadow: none !important;
+}
+
+.filter-group input::placeholder {
+    color: var(--muted);
+    font-weight: 500;
+}
+
+.select-group::after {
+    /* Ikon dihapus sesuai permintaan */
+    content: '';
+    position: absolute;
+    right: 14px;
+    color: var(--muted);
+    font-size: 20px;
+    pointer-events: none;
+}
+
+.filter-group select option {
+    background-color: var(--surface);
+    color: var(--text);
+    padding: 12px;
+    font-weight: 600;
+}
+
+/* =========================================================
+   VISUAL CATALOG GRID 
+   ========================================================= */
+.visual-catalog {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+  gap: 14px;
+  max-height: 55vh;
+  overflow-y: auto;
+  padding-right: 8px;
+  padding-bottom: 20px;
+}
+
+.v-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--rad);
+  cursor: pointer;
+  transition: var(--ease);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  box-shadow: var(--sh-sm);
+}
+.v-card:hover {
+  border-color: var(--accent-lt);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 28px rgba(109,40,217,.14), 0 2px 4px rgba(0,0,0,.04);
+}
+.v-card:active { transform: scale(.97); }
+.v-card.out-of-stock { opacity: .55; filter: grayscale(60%); cursor: not-allowed; }
+.v-card.out-of-stock:hover { transform: none; border-color: var(--border); box-shadow: var(--sh-sm); }
+
+.v-img-wrapper {
+  width: 100%; height: 110px;
+  background: linear-gradient(140deg, #f5f3ff 0%, #ede9fe 100%);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+.v-img-wrapper img { width: 100%; height: 100%; object-fit: contain; padding: 10px; }
+.v-img-placeholder { color: #c4b5fd; }
+
+.btn-info-detail {
+  position: absolute; top: 8px; left: 8px;
+  width: 26px; height: 26px; border-radius: 50%;
+  background: rgba(255,255,255,.9);
+  border: 1px solid rgba(124,58,237,.25);
+  color: var(--accent-lt);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 3; cursor: pointer; transition: var(--ease);
+  backdrop-filter: blur(4px); box-shadow: 0 2px 6px rgba(0,0,0,.08);
+}
+.btn-info-detail i { font-size: 15px; }
+.btn-info-detail:hover { background: var(--accent-lt); color: #fff; transform: scale(1.12); border-color: var(--accent-lt); }
+
+.v-info { padding: 12px; display: flex; flex-direction: column; flex-grow: 1; justify-content: space-between; }
+.v-title { font-size: .75rem; font-weight: 700; color: var(--text); margin-bottom: 6px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.v-price { font-family: var(--mono); font-size: .82rem; font-weight: 700; color: var(--accent-lt); }
+.v-stock { font-size: .62rem; font-weight: 700; padding: 2px 7px; border-radius: 5px; display: inline-block; width: fit-content; margin-top: 6px; }
+.v-stock-ready { background: #ecfdf5; color: var(--success); border: 1px solid #d1fae5; }
+.v-stock-empty { background: #fef2f2; color: var(--danger); border: 1px solid #fecaca; }
+
+.out-stock-overlay {
+  position: absolute; top: 10px; right: 10px; background: var(--danger); color: #fff;
+  font-size: .6rem; font-weight: 800; padding: 3px 8px; border-radius: 6px; letter-spacing: .5px;
+}
+
+/* =========================================================
+   MANUAL SELECT ROW & CART
+   ========================================================= */
+.d-flex.gap-2.mb-3.bg-white.p-2.rounded-3.border {
+  background: var(--surface) !important; border: 1.5px solid var(--border) !important;
+  border-radius: var(--rad) !important; box-shadow: var(--sh-sm);
+}
+.d-flex.gap-2.mb-3.bg-white.p-2.rounded-3.border .btn.btn-primary {
+  background: var(--accent-lt) !important; border: none !important; border-radius: var(--rad-sm) !important;
+  width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;
+  transition: var(--ease); padding: 0 !important;
+}
+.d-flex.gap-2.mb-3.bg-white.p-2.rounded-3.border .btn.btn-primary:hover { background: var(--accent) !important; transform: scale(1.06); box-shadow: var(--sh-accent); }
+
+.pos-table-container {
+  background: var(--surface); border: 1.5px solid var(--border) !important;
+  border-radius: var(--rad); overflow-y: auto; max-height: 242px; box-shadow: var(--sh-sm);
+}
+.pos-table-container .table thead th {
+  background: var(--bg) !important; font-family: var(--sans) !important; font-size: .65rem !important;
+  font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: .06em !important;
+  color: var(--muted) !important; padding: 11px 12px !important; border-bottom: 1px solid var(--border) !important; position: sticky; top: 0; z-index: 10;
+}
+.item-row td { padding: 10px 12px !important; vertical-align: middle; border-bottom: 1px solid #f0eefa; color: var(--text); }
+.item-row:hover td { background: #faf8ff; }
+.item-row td .fw-bold { font-size: .78rem; font-weight: 700; color: var(--text); }
+.item-row td .text-muted { font-size: .65rem; color: var(--muted) !important; }
+.angka-digital { font-family: var(--mono) !important; }
+
+.rem-item {
+  background: #fef2f2; color: var(--danger) !important; border: 1px solid #fecaca !important;
+  border-radius: 7px; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;
+  transition: var(--ease); cursor: pointer;
+}
+.rem-item:hover { background: var(--danger); color: #fff !important; transform: scale(1.08); }
+
+.item-row input[name="qty[]"] {
+  background: var(--bg) !important; border: 1.5px solid var(--border) !important;
+  border-radius: var(--rad-sm) !important; font-family: var(--mono) !important;
+  font-size: .8rem !important; color: var(--text) !important; text-align: center;
+}
+.item-row input[name="qty[]"]:focus { border-color: var(--accent-lt) !important; box-shadow: 0 0 0 3px rgba(124,58,237,.1) !important; }
+.item-row .product_total { font-family: var(--mono) !important; font-size: .85rem !important; font-weight: 700 !important; color: var(--accent-lt) !important; }
+
+/* =========================================================
+   SUMMARY PANEL
+   ========================================================= */
+.summary-panel {
+  background: var(--night) !important; border-radius: var(--rad) !important; padding: 1.5rem !important; color: #fff;
+  box-shadow: 0 16px 40px rgba(19,17,30,.22) !important; position: relative; overflow: hidden;
+}
+.summary-panel::after {
+  content: ''; position: absolute; bottom: -40px; right: -40px; width: 180px; height: 180px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(109,40,217,.25) 0%, transparent 70%); pointer-events: none;
+}
+.summary-label { color: #6e688a !important; font-size: .68rem !important; text-transform: uppercase !important; font-weight: 700 !important; letter-spacing: .07em !important; }
+
+.pay-method-btn {
+  background: rgba(255,255,255,.05) !important; border: 1.5px solid rgba(255,255,255,.1) !important; color: #8a84a3 !important;
+  border-radius: var(--rad-sm) !important; padding: 9px 8px !important; cursor: pointer; transition: var(--ease) !important;
+  font-family: var(--sans) !important; font-size: .72rem !important; font-weight: 800 !important; text-align: center; letter-spacing: .04em;
+}
+.pay-method-btn:hover { background: rgba(255,255,255,.1) !important; color: #ddd8f5 !important; }
+.pay-method-btn.active { background: rgba(109,40,217,.3) !important; border-color: rgba(124,58,237,.7) !important; color: #c4b5fd !important; box-shadow: 0 4px 18px rgba(109,40,217,.35) !important; transform: translateY(-1px); }
+
+.summary-panel #sub_total { font-family: var(--mono) !important; font-weight: 700 !important; color: #c4b5fd !important; }
+
+.summary-panel .input-diskon { background: rgba(255,255,255,.05) !important; border: 1.5px solid rgba(255,255,255,.1) !important; color: #a5f3fc !important; border-radius: var(--rad-sm) !important; font-family: var(--mono) !important; font-size: .82rem !important; text-align: right; }
+.summary-panel .input-diskon:focus { border-color: #a78bfa !important; box-shadow: 0 0 0 3px rgba(167,139,250,.2) !important; }
+.summary-panel .diskon-group-text { background: rgba(255,255,255,.04) !important; border: 1.5px solid rgba(255,255,255,.1) !important; border-right: none !important; color: #a78bfa !important; font-size: .72rem !important; font-weight: 800 !important; border-radius: var(--rad-sm) 0 0 var(--rad-sm) !important; }
+
+.summary-panel #grand_total { font-family: var(--mono) !important; color: #fff !important; font-weight: 700 !important; }
+.summary-panel .h2 { font-size: 1.95rem !important; }
+.summary-panel #diskon_amount { color: #f87171 !important; font-family: var(--mono) !important; font-weight: 700 !important; }
+.summary-panel hr { border-color: rgba(255,255,255,.08) !important; }
+
+#check_out {
+  background: linear-gradient(135deg, var(--accent-lt) 0%, #4f46e5 100%) !important; border: none !important; padding: 1rem !important;
+  border-radius: var(--rad) !important; font-family: var(--sans) !important; font-weight: 800 !important; font-size: .92rem !important;
+  color: #fff !important; width: 100%; margin-top: 1rem; transition: var(--ease) !important; letter-spacing: .04em;
+  box-shadow: 0 4px 20px rgba(109,40,217,.35) !important; cursor: pointer;
+}
+#check_out:hover { transform: translateY(-2px) !important; box-shadow: 0 10px 30px rgba(109,40,217,.45) !important; }
+#check_out:active { transform: scale(.98) !important; }
+
+/* =========================================================
+   QRIS OVERLAY
+   ========================================================= */
+#qris-display-area { display: none; position: fixed; inset: 0; background: rgba(13,11,22,.72); backdrop-filter: blur(14px); z-index: 9999; align-items: center; justify-content: center; }
+.qris-modal-box { background: var(--surface); padding: 35px 30px; border-radius: 22px; text-align: center; box-shadow: 0 30px 60px rgba(0,0,0,.3); width: 90%; max-width: 350px; animation: qrisPop .4s cubic-bezier(.16,1,.3,1); }
+.qris-modal-box h4 { font-family: var(--sans); font-weight: 800; font-size: 1.1rem; color: var(--text); margin-bottom: 4px; }
+.qris-modal-box p { font-size: .82rem; color: var(--sub); margin-bottom: 20px; }
+.qris-modal-box #qris-total-text { font-family: var(--mono); font-weight: 700; font-size: 1.3rem; color: var(--accent-lt); }
+.qris-img-wrapper { background: var(--accent-bg); border: 1px solid var(--border); border-radius: 16px; padding: 14px; display: inline-block; margin-bottom: 20px; }
+#qris-img { width: 220px; height: 220px; border-radius: 8px; display: block; }
+.btn-qris-action { width: 100%; padding: 12px; border-radius: var(--rad); font-family: var(--sans); font-weight: 800; font-size: .88rem; transition: var(--ease); cursor: pointer; }
+.btn-qris-action.btn-primary { background: linear-gradient(135deg, var(--accent-lt), #4f46e5) !important; border: none !important; box-shadow: var(--sh-accent); color: #fff !important; }
+.btn-qris-action.btn-primary:hover { transform: translateY(-1px); opacity: .92; }
+.btn-qris-action.btn-outline-danger { border: 1.5px solid #fecaca !important; color: var(--danger) !important; background: transparent !important; }
+.btn-qris-action.btn-outline-danger:hover { background: #fef2f2 !important; }
+
+/* =========================================================
+   SWEETALERT2 OVERRIDES (TEMA KACA / GLASSMORPHISM)
+   ========================================================= */
+.swal2-html-container { margin: 1em 1.6em 0.3em !important; }
+</style>
+
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+    <div class="mdc-card">
+        <form action="" id="pos-form">
+            <input type="hidden" name="payment_method" id="payment_method" value="cash">
+            
+            <fieldset class="mb-4 p-3 shadow-sm" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px;">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold text-primary m-0" style="font-size: 0.85rem;"><i class="mdi mdi-account-circle me-1"></i> IDENTITAS PELANGGAN (Opsional)</h6>
+                    <div id="jam-digital" class="small py-1 px-2"></div>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="pos-label">Nama Pembeli</label>
+                        <input type="text" name="customer_name" class="form-control" placeholder="Ketik nama pelanggan..." maxlength="50">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="pos-label">No. WhatsApp</label>
+                        <input type="tel" name="customer_wa" class="form-control font-monospace" placeholder="08xx-xxxx-xxxx" maxlength="15" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="pos-label">Alamat Lengkap</label>
+                        <input type="text" name="customer_address" class="form-control" placeholder="Misal: Pontianak Kota" maxlength="50">
+                    </div>
+                </div>
+            </fieldset>
+
+            <div class="row g-4" id="POS-field">
+                
+                <div class="col-xl-7 col-lg-6 col-md-12">
+
+                    <div class="filter-pos-wrapper">
+                        <div class="filter-header-pos">
+                            <i class="mdi mdi-tune text-accent"></i> Filter & Pencarian
+                        </div>
+                        <div class="filter-controls-pos">
+                            <div class="filter-group">
+                                <i class="mdi mdi-magnify icon-prefix"></i>
+                                <input type="text" id="v-search" placeholder="Ketik Nama, SKU...">
+                            </div>
+                            <div class="filter-group select-group">
+                                <i class="mdi mdi-shape-outline icon-prefix"></i>
+                                <select id="v-category">
+                                    <option value="all">Semua Merek</option>
+                                </select>
+                            </div>
+                            <div class="filter-group select-group">
+                                <i class="mdi mdi-laptop icon-prefix"></i>
+                                <select id="v-type">
+                                    <option value="all">Semua Tipe</option>
+                                </select>
+                            </div>
+                            <div class="filter-group select-group">
+                                <i class="mdi mdi-sort-variant icon-prefix"></i>
+                                <select id="v-sort">
+                                    <option value="default">Urut: Default</option>
+                                    <option value="lowest">Harga Terendah</option>
+                                    <option value="highest">Harga Tertinggi</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="visual-catalog custom-scroll" id="product_catalog_container">
+                        {% for product in products %}
+                        <div class="v-card {% if product.stock <= 0 %}out-of-stock{% endif %}" 
+                             onclick="{% if product.stock > 0 %}addFromVisual('{{ product.pk }}'){% else %}alertKosong(){% endif %}"
+                             data-search="{{ product.category_id.name|lower }} {{ product.name|lower }} {{ product.code|lower }}"
+                             data-category="{{ product.category_id.name|default:'Tanpa Merek' }}"
+                             data-title="{{ product.name }}"
+                             data-price="{{ product.price }}"
+                             data-original-index="{{ forloop.index }}">
+                            
+                            <div class="v-img-wrapper">
+                                <button type="button" class="btn-info-detail" title="Lihat Detail Produk"
+                                        data-category="{{ product.category_id.name|default:'Tanpa Merek' }}"
+                                        data-title="{{ product.name }}"
+                                        data-sku="{{ product.code }}"
+                                        data-desc="{{ product.description|default:'Tidak ada spesifikasi khusus.' }}"
+                                        data-warranty="{% if product.warranty and product.warranty > 0 %}{{ product.warranty }} Hari{% else %}Non-Garansi{% endif %}"
+                                        data-img="{% if product.image %}{{ product.image.url }}{% endif %}"
+                                        onclick="showProductInfo(event, this)">
+                                    <i class="mdi mdi-information-variant"></i>
+                                </button>
+
+                                {% if product.image %}
+                                    <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                                {% else %}
+                                    <div class="v-img-placeholder"><i class="mdi mdi-image-outline" style="font-size: 40px;"></i></div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="v-info">
+                                <div>
+                                    <div class="v-title">{{ product.category_id.name }} {{ product.name }}</div>
+                                    <div class="v-stock {% if product.stock > 0 %}v-stock-ready{% else %}v-stock-empty{% endif %}">
+                                        {% if product.stock > 0 %}Sisa: {{ product.stock }}{% else %}Habis{% endif %}
+                                    </div>
+                                </div>
+                                <div class="v-price">Rp {{ product.price|floatformat:"0"|intcomma }}</div>
+                            </div>
+                            
+                            {% if product.stock <= 0 %}
+                            <div class="out-stock-overlay">KOSONG</div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="col-xl-5 col-lg-6 col-md-12">
+                    
+                    <!-- Hidden inputs untuk addFromVisual() — tidak perlu ditampilkan -->
+                    <select id="product-id" style="display:none;">
+                        <option value="" disabled selected></option>
+                        {% for product in products %}
+                            <option value="{{ product.pk }}" data-warranty="{% if product.warranty %}{{ product.warranty }}{% else %}0{% endif %}">{{ product.category_id.name }} {{ product.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <input type="number" id="product-qty" value="1" min="1" style="display:none;">
+                    <button type="button" id="add_item" style="display:none;"></button>
+
+                    <div class="pos-table-container mb-3 custom-scroll">
+                        <table class="table mb-0">
+                            <thead>
+                                <tr>
+                                    <th width="5%" class="text-center">#</th>
+                                    <th width="15%" class="text-center">QTY</th>
+                                    <th width="45%">PRODUK</th>
+                                    <th width="35%" class="text-end">TOTAL</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+
+                    <div class="summary-panel keep-colors">
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <div class="pay-method-btn active" id="btn-cash" onclick="selectPayment('cash')">CASH / TUNAI</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="pay-method-btn" id="btn-qris" onclick="selectPayment('qris')">QRIS</div>
+                            </div>
+                        </div>
+
+                        <dl class="mb-0">
+                            <div class="d-flex justify-content-between mb-2">
+                                <dt class="summary-label">Subtotal</dt>
+                                <dd class="text-end m-0"><span class="h5 angka-digital fw-bold" id="sub_total">0.00</span></dd>
+                            </div>
+                            <input type="hidden" name="sub_total" value="0">
+
+                            <dt class="summary-label text-info mb-1 mt-2">Diskon / Potongan</dt>
+                            <dd class="mb-3">
+                                <div class="row g-2">
+                                    <div class="col-4">
+                                        <div class="input-group">
+                                            <span class="input-group-text diskon-group-text">%</span>
+                                            <input type="number" class="form-control input-diskon p-1" id="diskon_percent" name="diskon" value="0" min="0" max="100">
+                                        </div>
+                                    </div>
+                                    <div class="col-8">
+                                        <div class="input-group">
+                                            <span class="input-group-text diskon-group-text">Rp</span>
+                                            <input type="number" class="form-control input-diskon p-1" id="diskon_nominal" value="0" min="0">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-end mt-1">
+                                    <span class="h5 angka-digital fw-bold" id="diskon_amount">0.00</span>
+                                </div>
+                            </dd>
+                            <input type="hidden" name="diskon_amount" value="0">
+
+                            <hr class="border-secondary opacity-25 my-2">
+
+                            <dt class="summary-label text-white">TOTAL PEMBAYARAN</dt>
+                            <dd class="text-end m-0">
+                                <span class="h2 angka-digital text-white fw-bold" id="grand_total">0.00</span>
+                                <input type="hidden" name="grand_total" value="0">
+                                <input type="hidden" name="tendered_amount" value="0">
+                                <input type="hidden" name="amount_change" value="0">
+                            </dd>
+                        </dl>
+                        
+                        <button id="check_out" type="button">
+                            PROSES BAYAR <i class="mdi mdi-check-circle-outline ms-1"></i>
+                        </button>
+                    </div>
+                </div>
+
+            </div></form>
+    </div>
+</div>
+
+<div id="qris-display-area">
+    <div class="qris-modal-box">
+        <h4 class="fw-bold text-dark mb-1">PEMBAYARAN QRIS</h4>
+        <p class="text-muted small mb-3">Total: <strong id="qris-total-text" class="text-primary fs-5">Rp0</strong></p>
+        <div class="qris-img-wrapper"><img src="" id="qris-img"></div>
+        <button type="button" class="btn btn-primary btn-qris-action mb-2" onclick="confirmQrisPayment()"><i class="mdi mdi-check-circle-outline me-1"></i> KONFIRMASI BAYAR</button>
+        <button type="button" class="btn btn-outline-danger btn-qris-action mb-0" onclick="selectPayment('cash')">BATAL</button>
+    </div>
+</div>
+
+<noscript id="item-clone">
+    <tr class="item-row">
+        <td class="text-center p-1">
+            <button class="rem-item" type="button"><i class="mdi mdi-close"></i></button>
+        </td>
+        <td class="p-1">
+            <input type="hidden" name="product_id[]">
+            <input type="hidden" name="price[]">
+            <input type="number" name="qty[]" min="1" class="form-control form-control-sm text-center angka-digital border-0 bg-transparent shadow-none px-0" style="height:30px!important; width:100%;">
+        </td>
+        <td class="p-1">
+            <div class="product_name fw-bold text-dark" style="font-size: 0.75rem; line-height: 1.2;"></div>
+            <div class="product_price angka-digital text-muted" style="font-size: 0.65rem; margin-top: 2px;"></div>
+        </td>
+        <td class="product_total text-end angka-digital fw-bold text-primary p-1" style="font-size: 0.85rem;"></td>
+    </tr>
+</noscript>
+
+{% endblock pageContent %}
+
+{% block ScriptBlock %}
+<script>
+    // ============================================================
+    // LOGIKA FILTER POS CANGGIH (UPDATE)
+    // ============================================================
+    $(function() {
+        let vCats = new Set();
+        let vTypes = new Set();
+
+        // 1. Ekstrak Kategori & Tipe
+        $('.v-card').each(function() {
+            let catName = $(this).attr('data-category').trim();
+            if(catName && catName !== "Tanpa Merek") vCats.add(catName);
+
+            let productName = $(this).attr('data-title').trim().toUpperCase();
+            let firstWord = productName.split(" ")[0]; 
+            if(firstWord) vTypes.add(firstWord);
+        });
+
+        // 2. Populate Dropdown
+        Array.from(vCats).sort().forEach(c => $('#v-category').append(`<option value="${c}">${c}</option>`));
+        Array.from(vTypes).sort().forEach(t => $('#v-type').append(`<option value="${t}">${t}</option>`));
+        $('#v-type').append('<option value="UMUM">UMUM / LAINNYA</option>');
+
+        // 3. Fungsi Filter
+        function runPosFilter() {
+            let q = $('#v-search').val().toLowerCase().trim();
+            let cat = $('#v-category').val();
+            let type = $('#v-type').val();
+            let sort = $('#v-sort').val();
+            
+            let container = $('#product_catalog_container');
+            let cards = container.find('.v-card').get();
+
+            cards.forEach(cardEl => {
+                let $card = $(cardEl);
+                let searchTxt = $card.attr('data-search');
+                let cardCat = $card.attr('data-category');
+                let cardTitle = $card.attr('data-title').toUpperCase();
+
+                let matchSearch = searchTxt.includes(q);
+                let matchCat = (cat === 'all') || (cardCat === cat);
+                
+                let matchType = false;
+                if(type === 'all') { 
+                    matchType = true; 
+                } else if(type === 'UMUM') {
+                    let hasType = false;
+                    vTypes.forEach(t => { if(t !== 'UMUM' && cardTitle.startsWith(t)) hasType = true; });
+                    matchType = !hasType;
+                } else {
+                    matchType = cardTitle.startsWith(type);
+                }
+
+                if(matchSearch && matchCat && matchType) {
+                    $card.show();
+                } else {
+                    $card.hide();
+                }
+            });
+
+            // Sorting Harga
+            if(sort !== 'default') {
+                cards.sort((a,b) => {
+                    let pA = parseFloat($(a).attr('data-price')) || 0;
+                    let pB = parseFloat($(b).attr('data-price')) || 0;
+                    return sort === 'highest' ? pB - pA : pA - pB;
+                });
+            } else {
+                cards.sort((a,b) => $(a).attr('data-original-index') - $(b).attr('data-original-index'));
+            }
+            
+            // Re-append cards
+            $.each(cards, (idx, itm) => container.append(itm));
+        }
+
+        // 4. Trigger Events
+        $('#v-search').on('input', function(e) {
+            let val = $(this).val();
+            let isAllDigits = /^\d+$/.test(val);
+            if (isAllDigits && val.length > 15) {
+                $(this).val(val.substring(0, 15));
+            } else if (!isAllDigits && val.length > 60) {
+                $(this).val(val.substring(0, 60));
+            }
+            runPosFilter();
+        });
+        $('#v-category, #v-type, #v-sort').on('change', runPosFilter);
+    });
+
+    // ── Add from catalog card ──
+    function addFromVisual(productId) {
+        $('#product-id').val(productId).trigger('change');
+        $('#product-qty').val(1);
+        $('#add_item').click();
+    }
+
+    function alertKosong() {
+        Swal.fire({
+            title: 'Stok Kosong!',
+            text: 'Produk ini sedang tidak tersedia di gudang.',
+            icon: 'error',
+            buttonsStyling: false,
+            customClass: { popup: 'swal-premium-popup', title: 'swal-premium-title' , confirmButton: 'swal-premium-confirm', cancelButton: 'swal-premium-cancel' }
+        });
+    }
+
+    // ── Product info popup ──
+    function showProductInfo(event, btnElement) {
+        event.stopPropagation();
+        let $btn     = $(btnElement);
+        let category = $btn.attr('data-category');
+        let type     = $btn.attr('data-title');
+        let sku      = $btn.attr('data-sku');
+        let desc     = $btn.attr('data-desc');
+        let warranty = $btn.attr('data-warranty');
+        let imgSrc   = $btn.attr('data-img');
+
+        let imageHtml = imgSrc && imgSrc.trim() !== ''
+            ? `<div style="margin-bottom:18px;background:var(--surface, #ffffff);padding:14px;border-radius:14px;border:1px solid var(--border, #e2dff0);text-align:center;">
+                   <img src="${imgSrc}" class="product-info-img" style="max-width:100%;max-height:240px;object-fit:contain;border-radius:8px;">
+               </div>`
+            : `<div style="height:180px;background:var(--surface, #ffffff);border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:18px;border:1px solid var(--border, #e2dff0);">
+                   <i class="mdi mdi-image-off" style="font-size:56px;color:var(--muted, #a09ab8);"></i>
+               </div>`;
+
+        Swal.fire({
+            title: `<h4 style="font-family:'Sora',sans-serif;font-weight:800;color:#1c1830;letter-spacing:-.3px;">${category}<br><span style="font-size:1rem;color:#6b6585;font-weight:600;">${type}</span></h4>
+                    <span style="font-size:.8rem;color:#7c3aed;font-family:'Space Mono',monospace;font-weight:700;background:#f3f0ff;padding:4px 11px;border-radius:8px;border:1px solid #ddd6fe;">SKU: ${sku}</span>`,
+            html: `
+                ${imageHtml}
+                <div style="text-align:left;background:#f8f7ff;padding:18px;border-radius:16px;border:1px solid #ede9fe;">
+                    <div style="margin-bottom:14px;">
+                        <span style="font-size:.8rem;font-weight:700;color:#059669;background:#ecfdf5;padding:5px 12px;border-radius:10px;border:1px solid #d1fae5;display:inline-flex;align-items:center;gap:6px;">
+                            <i class="mdi mdi-shield-check" style="font-size:15px;"></i> Garansi: ${warranty}
+                        </span>
+                    </div>
+                    <span style="font-size:.68rem;font-weight:800;color:#a09ab8;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:7px;">Spesifikasi Produk</span>
+                    <p style="font-size:.92rem;color:#534f5b;font-weight:500;line-height:1.6;margin:0;white-space:pre-wrap;">${desc}</p>
+                </div>`,
+            showCloseButton: true,
+            showConfirmButton: false,
+            width: '540px',
+            customClass: { popup: 'swal-premium-popup' , confirmButton: 'swal-premium-confirm', cancelButton: 'swal-premium-cancel' },
+            didOpen: () => { document.querySelector('.swal2-container').style.zIndex = '999999'; }
+        });
+    }
+
+    // ── QRIS helpers ──
+    function updateQRISImage(totalAmount) {
+        let clean = Math.round(parseFloat(totalAmount || 0));
+        $('#qris-img').attr('src', `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent('ELTECH-PAY-' + clean)}`);
+        $('#qris-total-text').text('Rp ' + clean.toLocaleString('id-ID'));
+    }
+
+    function selectPayment(method) {
+        if (method === 'qris' && $('#POS-field table tbody tr').length <= 0) {
+            Swal.fire({ title: 'Keranjang Kosong!', text: 'Silakan tambahkan produk terlebih dahulu.', icon: 'warning', confirmButtonText: 'Mengerti', buttonsStyling: false, customClass: { popup: 'swal-premium-popup', title: 'swal-premium-title' , confirmButton: 'swal-premium-confirm', cancelButton: 'swal-premium-cancel' } });
+            $('.pay-method-btn').removeClass('active'); $('#btn-cash').addClass('active'); $('#payment_method').val('cash'); return;
+        }
+        $('.pay-method-btn').removeClass('active');
+        $('#payment_method').val(method);
+        if (method === 'qris') {
+            $('#btn-qris').addClass('active');
+            updateQRISImage($('[name="grand_total"]').val());
+            $('#qris-display-area').css('display', 'flex').hide().fadeIn(200);
+        } else {
+            $('#btn-cash').addClass('active');
+            $('#qris-display-area').fadeOut(200);
+        }
+    }
+
+    function confirmQrisPayment() {
+        Swal.fire({
+            title: 'Konfirmasi QRIS', text: 'Apakah pembayaran sudah berhasil?', icon: 'question',
+            showCancelButton: true, buttonsStyling: false, cancelButtonColor: '#dc2626',
+            confirmButtonText: 'Ya, Simpan', cancelButtonText: 'Belum',
+            customClass: { popup: 'swal-premium-popup', title: 'swal-premium-title' , confirmButton: 'swal-premium-confirm', cancelButton: 'swal-premium-cancel' },
+            didOpen: () => { document.querySelector('.swal2-container').style.zIndex = '999999'; }
+        }).then((result) => { if (result.isConfirmed) { $('#pos-form').submit(); } });
+    }
+
+    // ── Product data ──
+    var product_json = {{ product_json|safe }};
+    var prod_arr = {};
+    if (product_json && product_json.length > 0) {
+        product_json.forEach(function(item) { prod_arr[item.id] = item; });
+    }
+
+    // ── Calc ──
+    function calc() {
+        var sub_total = 0;
+        $('#POS-field table tbody tr').each(function() {
+            let price = $(this).find('[name="price[]"]').val();
+            let qtyInput = $(this).find('[name="qty[]"]');
+            let qty = parseFloat(qtyInput.val()) || 0;
+            if (qty < 1) { qty = 1; qtyInput.val(1); }
+            let maxStock = parseFloat(qtyInput.attr('max')) || Infinity;
+            if (qty > maxStock) {
+                qty = maxStock; qtyInput.val(maxStock);
+                Swal.fire({ toast: true, position: 'top-end', icon: 'warning', title: 'Batas maksimal stok!', showConfirmButton: false, timer: 1500 });
+            }
+            let total = parseFloat(price) * qty;
+            $(this).find('.product_total').text(total.toLocaleString('id-ID', { minimumFractionDigits: 2 }));
+            sub_total += total;
+        });
+
+        let diskon_persen  = parseFloat($('#diskon_percent').val()) || 0;
+        let diskon_nominal = parseFloat($('#diskon_nominal').val()) || 0;
+        let calc_persen    = sub_total * (diskon_persen / 100);
+        let total_diskon   = calc_persen + diskon_nominal;
+        if (total_diskon > sub_total) { total_diskon = sub_total; }
+        let total_akhir = sub_total - total_diskon;
+
+        $('#diskon_amount').text("- " + total_diskon.toLocaleString('id-ID', { minimumFractionDigits: 2 }));
+        $('[name="diskon_amount"]').val(total_diskon);
+        $('#grand_total').text(total_akhir.toLocaleString('id-ID', { minimumFractionDigits: 2 }));
+        $('[name="grand_total"]').val(total_akhir);
+        $('#sub_total').text(sub_total.toLocaleString('id-ID', { minimumFractionDigits: 2 }));
+        $('[name="sub_total"]').val(sub_total);
+
+        if ($('#payment_method').val() === 'qris') { updateQRISImage(total_akhir); }
+    }
+
+    $(function() {
+        setInterval(() => { $('#jam-digital').text(new Date().toLocaleString('id-ID')); }, 1000);
+
+        $('#add_item').click(function() {
+            var id  = $('#product-id').val();
+            var qty = parseFloat($('#product-qty').val()) || 1;
+            if (!id) {
+                Swal.fire({ title: 'Pilih Produk!', text: 'Silakan klik kartu produk atau pilih dari menu.', icon: 'info', confirmButtonText: 'Mengerti', buttonsStyling: false, customClass: { popup: 'swal-premium-popup' , confirmButton: 'swal-premium-confirm', cancelButton: 'swal-premium-cancel' } });
+                return false;
+            }
+            if (!!prod_arr[id]) {
+                let data = prod_arr[id];
+                let existingRow = $('#POS-field table tbody input[name="product_id[]"][value="' + id + '"]').closest('tr');
+                let currentQty  = 0;
+                if (existingRow.length > 0) { currentQty = parseFloat(existingRow.find('[name="qty[]"]').val()) || 0; }
+
+                if ((currentQty + qty) > data.stock) {
+                    Swal.fire({ title: 'Stok Tidak Cukup!', html: `Sisa stok <b>${data.name}</b> hanya <b>${data.stock}</b>.`, icon: 'error', buttonsStyling: false, customClass: { popup: 'swal-premium-popup' , confirmButton: 'swal-premium-confirm', cancelButton: 'swal-premium-cancel' }, didOpen: () => { document.querySelector('.swal2-container').style.zIndex = '999999'; } });
+                    return false;
+                }
+
+                if (existingRow.length > 0) {
+                    existingRow.find('[name="qty[]"]').val(currentQty + qty);
+                    calc();
+                } else {
+                    let tr   = $($('noscript#item-clone').html()).clone();
+                    let name = $('#product-id option:selected').text().trim();
+                    tr.find('[name="qty[]"]').val(qty).attr('max', data.stock);
+                    tr.find('[name="product_id[]"]').val(id);
+                    tr.find('[name="price[]"]').val(data.price);
+                    tr.find('.product_name').text(name);
+                    tr.find('.product_price').text('@ Rp ' + parseFloat(data.price).toLocaleString('id-ID'));
+                    tr.find('.product_total').text(parseFloat(data.price * qty).toLocaleString('id-ID'));
+                    $('#POS-field table tbody').append(tr);
+                    tr.find('[name="qty[]"]').on('input', calc);
+                    tr.find('.rem-item').click(function() { tr.fadeOut(200, function() { $(this).remove(); calc(); }); });
+                    calc();
+                }
+                $('#product-id').val('').trigger('change');
+                $('#product-qty').val(1);
+            }
+        });
+
+        $('#diskon_percent, #diskon_nominal').on('input', calc);
+
+        $('#check_out').click(function() {
+            if ($('#POS-field table tbody tr').length <= 0) {
+                $('#qris-display-area').fadeOut('fast');
+                Swal.fire({ title: 'Keranjang Kosong!', text: 'Tambahkan produk sebelum membayar.', icon: 'warning', buttonsStyling: false, customClass: { popup: 'swal-premium-popup' , confirmButton: 'swal-premium-confirm', cancelButton: 'swal-premium-cancel' } }).then(() => { selectPayment('cash'); });
+                return false;
+            }
+            let method = $('#payment_method').val();
+            if (method === 'cash') {
+                uni_modal("Selesaikan Pembayaran", "{% url 'checkout-modal' %}?grand_total=" + $('[name="grand_total"]').val());
+            } else {
+                $('[name="tendered_amount"]').val($('[name="grand_total"]').val()); $('[name="amount_change"]').val(0); confirmQrisPayment();
+            }
+        });
+
+        $('#pos-form').submit(function(e) {
+            e.preventDefault();
+            start_loader();
+            $.ajax({
+                headers: { "X-CSRFToken": '{{csrf_token}}' }, url: "{% url 'save-pos' %}", data: new FormData($(this)[0]),
+                cache: false, contentType: false, processData: false, method: 'POST', dataType: 'json',
+                success: function(resp) {
+                    if (resp.status === 'success') {
+                        $('#qris-display-area').fadeOut('fast');
+                        if ($('#uni_modal').hasClass('show')) { $('#uni_modal').modal('hide'); }
+                        let nominalUang = $('#grand_total').text();
+                        
+                        // Bunyikan suara notifikasi sukses
+                        if (typeof window.playNotifSound === 'function') { window.playNotifSound(); }
+
+                        Swal.fire({ toast: true, position: 'top-end', icon: 'success', html: `Berhasil dibayar:<br><b style="font-size:1.15rem;font-family:'Space Mono',monospace;color:#059669;">Rp ${nominalUang}</b>`, showConfirmButton: false, timer: false, customClass: { popup: 'swal-premium-popup swal2-toast' , confirmButton: 'swal-premium-confirm', cancelButton: 'swal-premium-cancel' }, didOpen: (toast) => { toast.style.marginTop = '85px'; document.querySelector('.swal2-container').style.zIndex = '999999'; } });
+                        setTimeout(() => {
+                            end_loader();
+                            uni_modal("Struk Penjualan", "{% url 'receipt-modal' %}?id=" + resp.sale_id);
+                            $('#uni_modal').one('hidden.bs.modal', function() {
+                                Swal.fire({ title: 'Transaksi Selesai!', icon: 'success', confirmButtonText: 'Lanjut Transaksi Baru', buttonsStyling: false, allowOutsideClick: false, customClass: { popup: 'swal-premium-popup' , confirmButton: 'swal-premium-confirm', cancelButton: 'swal-premium-cancel' } }).then((r) => { if (r.isConfirmed) { location.reload(); } });
+                            });
+                        }, 500);
+                    } else if (resp.status === 'failed' && !!resp.msg) { alert(resp.msg); end_loader(); }
+                    else { alert("Gagal menyimpan transaksi!"); end_loader(); }
+                },
+                error: function() { alert("Terjadi kesalahan koneksi."); end_loader(); }
+            });
+        });
+    });
+</script>
+{% endblock ScriptBlock %}
