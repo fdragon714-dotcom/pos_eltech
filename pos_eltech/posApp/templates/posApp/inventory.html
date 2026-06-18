@@ -1,133 +1,313 @@
 {% extends "posApp/base.html" %}
 {% load humanize %}
 {% block pageContent %}
+
+<style>
+    /* ---------------------------------------------------
+       PREMIUM FRESH UI DESIGN UNTUK INVENTORY
+       --------------------------------------------------- */
+    :root {
+        --grad-success: linear-gradient(135deg, #0ba360 0%, #3cba92 100%);
+        --grad-danger: linear-gradient(135deg, #f857a6 0%, #ff5858 100%);
+        --grad-warning: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+        --card-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        --glass-bg: rgba(255, 255, 255, 0.95);
+    }
+
+    .fresh-card {
+        background: var(--glass-bg);
+        border-radius: 16px;
+        border: none;
+        box-shadow: var(--card-shadow);
+        padding: 20px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .fresh-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.08);
+    }
+
+    .summary-card {
+        border-radius: 16px;
+        border: none;
+        color: white;
+        padding: 24px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+    }
+
+    .summary-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .summary-card::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 150px;
+        height: 150px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 50%;
+    }
+
+    .summary-card i {
+        font-size: 40px;
+        position: absolute;
+        right: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        opacity: 0.3;
+    }
+
+    .summary-title {
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 600;
+        margin-bottom: 10px;
+        opacity: 0.9;
+    }
+
+    .summary-value {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin: 0;
+    }
+
+    .bg-grad-masuk { background: var(--grad-success); }
+    .bg-grad-keluar { background: var(--grad-danger); }
+    .bg-grad-menipis { background: var(--grad-warning); }
+
+    /* Custom Table Styling */
+    .fresh-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        margin-top: 15px;
+    }
+
+    .fresh-table thead th {
+        background: #f8f9fa;
+        color: #495057;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+        padding: 15px;
+        border: none;
+        border-bottom: 2px solid #edf2f9;
+    }
+
+    .fresh-table thead th:first-child { border-top-left-radius: 10px; }
+    .fresh-table thead th:last-child { border-top-right-radius: 10px; }
+
+    .fresh-table tbody td {
+        padding: 15px;
+        vertical-align: middle;
+        border-bottom: 1px solid #edf2f9;
+        color: #5e6e82;
+        font-size: 0.9rem;
+    }
+
+    .fresh-table tbody tr {
+        transition: background-color 0.2s ease;
+    }
+
+    .fresh-table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+
+    .fresh-badge {
+        padding: 6px 12px;
+        border-radius: 30px;
+        font-weight: 600;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+    }
+
+    .badge-masuk { background: #d1fae5; color: #065f46; }
+    .badge-keluar { background: #fee2e2; color: #991b1b; }
+    .badge-penyesuaian { background: #fef3c7; color: #92400e; }
+
+    /* Filter Form */
+    .filter-wrapper {
+        background: #fdfdfd;
+        border: 1px solid #edf2f9;
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .form-label-custom {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 5px;
+    }
+    
+    .form-control-custom {
+        border-radius: 8px;
+        border: 1px solid #ced4da;
+        box-shadow: none;
+        font-size: 0.9rem;
+    }
+    .form-control-custom:focus {
+        border-color: #3cba92;
+        box-shadow: 0 0 0 0.2rem rgba(60, 186, 146, 0.25);
+    }
+</style>
+
 <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
-    <div class="mdc-card py-2">
-        <div class="d-flex justify-content-between align-items-center">
-            <h4 class="card-title mb-0">Log Inventory</h4>
-            {% if user.is_superuser %}
-            <div>
-                <a href="{% url 'inventory-add' %}" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm border-0" style="background-color: var(--neon-cyan); color: #000;"><i class="material-icons mdc-button__icon align-middle">add</i> Tambah Stok Masuk</a>
-                <a href="{% url 'inventory-adjust' %}" class="btn btn-warning btn-sm rounded-pill px-3 shadow-sm border-0"><i class="material-icons mdc-button__icon align-middle">sync_alt</i> Penyesuaian Stok</a>
-            </div>
-            {% endif %}
+    <div class="fresh-card w-100 d-flex justify-content-between align-items-center">
+        <div>
+            <h3 class="mb-0 fw-bold text-dark">Manajemen Inventory</h3>
+            <p class="text-muted mb-0 small">Pantau pergerakan stok barang secara real-time</p>
         </div>
+        {% if user.is_superuser %}
+        <div class="d-flex gap-2">
+            <a href="{% url 'inventory-add' %}" class="btn btn-primary rounded-pill px-4 shadow-sm border-0 d-flex align-items-center" style="background: var(--grad-success); font-weight: 600;">
+                <i class="material-icons align-middle me-1">add_circle</i> Tambah Stok
+            </a>
+            <a href="{% url 'inventory-adjust' %}" class="btn btn-warning rounded-pill px-4 shadow-sm border-0 d-flex align-items-center text-dark" style="background: var(--grad-warning); font-weight: 600;">
+                <i class="material-icons align-middle me-1">sync_alt</i> Penyesuaian
+            </a>
+        </div>
+        {% endif %}
     </div>
 </div>
 
 <!-- Ringkasan Banner -->
-<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12 mt-3">
     <div class="row w-100 m-0">
-        <div class="col-md-4 mb-3">
-            <div class="card bg-success text-white shadow-sm border-0 rounded-3">
-                <div class="card-body">
-                    <h6 class="card-title"><i class="material-icons align-middle">arrow_downward</i> Total Masuk</h6>
-                    <h3 class="mb-0">{{ total_masuk }} Unit</h3>
-                </div>
+        <div class="col-md-4 pl-0 mb-3">
+            <div class="summary-card bg-grad-masuk">
+                <i class="material-icons">download</i>
+                <div class="summary-title">Total Barang Masuk</div>
+                <div class="summary-value">{{ total_masuk }}</div>
+                <div class="mt-2 small opacity-75">Seluruh unit yang ditambahkan</div>
             </div>
         </div>
         <div class="col-md-4 mb-3">
-            <div class="card bg-danger text-white shadow-sm border-0 rounded-3">
-                <div class="card-body">
-                    <h6 class="card-title"><i class="material-icons align-middle">arrow_upward</i> Total Keluar</h6>
-                    <h3 class="mb-0">{{ total_keluar }} Unit</h3>
-                </div>
+            <div class="summary-card bg-grad-keluar">
+                <i class="material-icons">upload</i>
+                <div class="summary-title">Total Barang Keluar</div>
+                <div class="summary-value">{{ total_keluar }}</div>
+                <div class="mt-2 small opacity-75">Unit yang terjual / dikurangkan</div>
             </div>
         </div>
-        <div class="col-md-4 mb-3">
-            <div class="card bg-warning text-dark shadow-sm border-0 rounded-3">
-                <div class="card-body">
-                    <h6 class="card-title"><i class="material-icons align-middle">warning</i> Stok Menipis (≤5)</h6>
-                    <h3 class="mb-0">{{ low_stock_count }} Produk</h3>
-                    <a href="{% url 'inventory-low-stock' %}" class="text-dark small text-decoration-underline">Lihat Detail</a>
+        <div class="col-md-4 pr-0 mb-3">
+            <div class="summary-card bg-grad-menipis">
+                <i class="material-icons">warning</i>
+                <div class="summary-title">Stok Menipis (≤5)</div>
+                <div class="summary-value">{{ low_stock_count }}</div>
+                <div class="mt-2">
+                    <a href="{% url 'inventory-low-stock' %}" class="text-white small fw-bold text-decoration-none border-bottom">Lihat Detail Produk</a>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
-    <div class="mdc-card">
-        <form method="GET" class="row mb-4 align-items-end">
-            <div class="col-md-3">
-                <label>Produk</label>
-                <select name="product" class="form-select form-select-sm">
-                    <option value="">Semua Produk</option>
-                    {% for p in products %}
-                    <option value="{{ p.id }}" {% if request.GET.product == p.id|stringformat:"s" %}selected{% endif %}>{{ p.code }} - {{ p.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label>Jenis</label>
-                <select name="type" class="form-select form-select-sm">
-                    <option value="Semua">Semua</option>
-                    <option value="MASUK" {% if request.GET.type == 'MASUK' %}selected{% endif %}>MASUK</option>
-                    <option value="KELUAR" {% if request.GET.type == 'KELUAR' %}selected{% endif %}>KELUAR</option>
-                    <option value="PENYESUAIAN" {% if request.GET.type == 'PENYESUAIAN' %}selected{% endif %}>PENYESUAIAN</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label>Dari Tanggal</label>
-                <input type="date" name="date_start" class="form-control form-control-sm" value="{{ request.GET.date_start }}">
-            </div>
-            <div class="col-md-2">
-                <label>Hingga Tanggal</label>
-                <input type="date" name="date_end" class="form-control form-control-sm" value="{{ request.GET.date_end }}">
-            </div>
-            <div class="col-md-3">
-                <button type="submit" class="btn btn-primary btn-sm w-100">Filter</button>
-            </div>
-        </form>
+<!-- Main Table Card -->
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12 mt-2">
+    <div class="fresh-card w-100">
+        
+        <!-- Filter Form -->
+        <div class="filter-wrapper">
+            <form method="GET" class="row align-items-end g-3">
+                <div class="col-md-3">
+                    <label class="form-label-custom">Filter Produk</label>
+                    <select name="product" class="form-select form-control-custom">
+                        <option value="">Semua Produk</option>
+                        {% for p in products %}
+                        <option value="{{ p.id }}" {% if request.GET.product == p.id|stringformat:"s" %}selected{% endif %}>{{ p.code }} - {{ p.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label-custom">Jenis Pergerakan</label>
+                    <select name="type" class="form-select form-control-custom">
+                        <option value="Semua">Semua</option>
+                        <option value="MASUK" {% if request.GET.type == 'MASUK' %}selected{% endif %}>MASUK</option>
+                        <option value="KELUAR" {% if request.GET.type == 'KELUAR' %}selected{% endif %}>KELUAR</option>
+                        <option value="PENYESUAIAN" {% if request.GET.type == 'PENYESUAIAN' %}selected{% endif %}>PENYESUAIAN</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label-custom">Dari Tanggal</label>
+                    <input type="date" name="date_start" class="form-control form-control-custom" value="{{ request.GET.date_start }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label-custom">Hingga Tanggal</label>
+                    <input type="date" name="date_end" class="form-control form-control-custom" value="{{ request.GET.date_end }}">
+                </div>
+                <div class="col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-dark w-100 rounded-pill shadow-sm" style="font-weight:600;"><i class="material-icons align-middle" style="font-size:18px;">search</i> Terapkan</button>
+                    {% if request.GET.product or request.GET.type or request.GET.date_start or request.GET.date_end %}
+                    <a href="{% url 'inventory-page' %}" class="btn btn-outline-secondary rounded-pill shadow-sm" title="Reset Filter"><i class="material-icons align-middle" style="font-size:18px;">refresh</i></a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+
         <div class="table-responsive">
-            <table class="table table-striped table-bordered">
-                <colgroup>
-                    <col width="15%">
-                    <col width="20%">
-                    <col width="10%">
-                    <col width="10%">
-                    <col width="10%">
-                    <col width="20%">
-                    <col width="15%">
-                </colgroup>
+            <table class="fresh-table">
                 <thead>
                     <tr>
-                        <th class="text-center py-1">Tanggal</th>
-                        <th class="text-center py-1">Produk</th>
-                        <th class="text-center py-1">Jenis</th>
-                        <th class="text-center py-1">Jumlah</th>
-                        <th class="text-center py-1">Stok Akhir</th>
-                        <th class="text-center py-1">Keterangan</th>
-                        <th class="text-center py-1">Oleh</th>
+                        <th class="text-center">Waktu</th>
+                        <th>Produk</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-center">Jml</th>
+                        <th class="text-center">Sisa Stok</th>
+                        <th>Keterangan</th>
+                        <th class="text-center">Oleh</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for log in logs %}
                     <tr>
-                        <td class="px-2 py-1 text-center">{{ log.date_added|date:'Y-m-d H:i' }}</td>
-                        <td class="px-2 py-1"><a href="{% url 'inventory-product' log.product.id %}">{{ log.product.code }} - {{ log.product.name }}</a></td>
-                        <td class="px-2 py-1 text-center">
+                        <td class="text-center text-dark font-weight-bold" style="font-size:0.85rem;">{{ log.date_added|date:'d M Y, H:i' }}</td>
+                        <td>
+                            <a href="{% url 'inventory-product' log.product.id %}" class="text-decoration-none fw-bold" style="color: #2c7be5;">{{ log.product.name }}</a>
+                            <br><small class="text-muted">{{ log.product.code }}</small>
+                        </td>
+                        <td class="text-center">
                             {% if log.movement_type == 'MASUK' %}
-                            <span class="badge bg-success rounded-pill px-3">MASUK</span>
+                            <span class="fresh-badge badge-masuk">MASUK</span>
                             {% elif log.movement_type == 'KELUAR' %}
-                            <span class="badge bg-danger rounded-pill px-3">KELUAR</span>
+                            <span class="fresh-badge badge-keluar">KELUAR</span>
                             {% else %}
-                            <span class="badge bg-warning text-dark rounded-pill px-3">PENYESUAIAN</span>
+                            <span class="fresh-badge badge-penyesuaian">PENYESUAIAN</span>
                             {% endif %}
                         </td>
-                        <td class="px-2 py-1 text-center font-weight-bold">
-                            {% if log.quantity_change > 0 %}+{{ log.quantity_change }}{% else %}{{ log.quantity_change }}{% endif %}
+                        <td class="text-center">
+                            {% if log.quantity_change > 0 %}
+                            <span class="text-success fw-bold">+{{ log.quantity_change }}</span>
+                            {% elif log.quantity_change < 0 %}
+                            <span class="text-danger fw-bold">{{ log.quantity_change }}</span>
+                            {% else %}
+                            <span class="text-warning fw-bold">{{ log.quantity_change }}</span>
+                            {% endif %}
                         </td>
-                        <td class="px-2 py-1 text-center">{{ log.stock_after }}</td>
-                        <td class="px-2 py-1">
-                            <small>{{ log.note }}</small>
-                            {% if log.reference_code %}<br><small class="text-muted">Ref: {{ log.reference_code }}</small>{% endif %}
+                        <td class="text-center text-dark fw-bold">{{ log.stock_after }}</td>
+                        <td>
+                            <span class="d-block">{{ log.note }}</span>
+                            {% if log.reference_code %}<small class="text-muted"><i class="material-icons align-middle" style="font-size:12px;">tag</i> {{ log.reference_code }}</small>{% endif %}
                         </td>
-                        <td class="px-2 py-1 text-center">{{ log.recorded_by.username|default:"Sistem" }}</td>
+                        <td class="text-center">
+                            <span class="bg-light px-2 py-1 rounded text-dark small fw-bold">{{ log.recorded_by.username|default:"Sistem" }}</span>
+                        </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="7" class="text-center py-3">Belum ada log pergerakan stok.</td>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <i class="material-icons d-block mb-2" style="font-size:40px; color:#d8e2ef;">inventory_2</i>
+                            Belum ada pergerakan stok yang tercatat.
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
