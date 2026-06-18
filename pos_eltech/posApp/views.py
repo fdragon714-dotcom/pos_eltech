@@ -693,8 +693,8 @@ def delete_sale(request):
         for item in sale_items:
             product = item.product_id
             if product:
-                stock_before = product.stock
-                product.stock += int(float(item.qty))
+                stock_before = product.stock or 0
+                product.stock = stock_before + int(float(item.qty))
                 product.save()
                 
                 InventoryLog(
