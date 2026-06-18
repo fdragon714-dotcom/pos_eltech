@@ -1,0 +1,198 @@
+{% extends "posApp/base.html" %}
+{% load humanize %}
+{% block pageContent %}
+
+<style>
+    :root {
+        --grad-primary: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        --grad-success: linear-gradient(135deg, #0ba360 0%, #3cba92 100%);
+        --grad-warning: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+        --card-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        --glass-bg: rgba(255, 255, 255, 0.95);
+    }
+
+    .fresh-card {
+        background: var(--glass-bg);
+        border-radius: 16px;
+        border: none;
+        box-shadow: var(--card-shadow);
+        padding: 20px;
+    }
+
+    .summary-card {
+        border-radius: 16px;
+        border: none;
+        color: white;
+        padding: 24px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+    }
+
+    .summary-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .summary-card::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 150px;
+        height: 150px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 50%;
+    }
+
+    .summary-card i {
+        font-size: 40px;
+        position: absolute;
+        right: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        opacity: 0.3;
+    }
+
+    .summary-title {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 600;
+        margin-bottom: 10px;
+        opacity: 0.9;
+    }
+
+    .summary-value {
+        font-size: 2rem;
+        font-weight: 800;
+        margin: 0;
+    }
+
+    .bg-grad-primary { background: var(--grad-primary); }
+    .bg-grad-success { background: var(--grad-success); }
+    .bg-grad-warning { background: var(--grad-warning); }
+
+    .fresh-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        margin-top: 15px;
+    }
+
+    .fresh-table thead th {
+        background: #f8f9fa;
+        color: #495057;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        padding: 12px;
+        border-bottom: 2px solid #edf2f9;
+    }
+
+    .fresh-table tbody td {
+        padding: 12px;
+        vertical-align: middle;
+        border-bottom: 1px solid #edf2f9;
+        color: #5e6e82;
+        font-size: 0.85rem;
+    }
+
+    .fresh-table tbody tr:hover { background-color: #f8f9fa; }
+</style>
+
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+    <div class="fresh-card w-100 d-flex justify-content-between align-items-center">
+        <div>
+            <h3 class="mb-0 fw-bold text-dark">Laporan & Nilai Aset</h3>
+            <p class="text-muted mb-0 small">Ringkasan total modal dan potensi pendapatan toko</p>
+        </div>
+        <button class="btn btn-primary rounded-pill px-4 shadow-sm border-0 d-flex align-items-center" onclick="window.print()" style="background: var(--grad-primary); font-weight: 600;">
+            <i class="material-icons align-middle me-1">print</i> Cetak Laporan
+        </button>
+    </div>
+</div>
+
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12 mt-3">
+    <div class="row w-100 m-0">
+        <div class="col-md-4 pl-0 mb-3">
+            <div class="summary-card bg-grad-warning">
+                <i class="material-icons">inventory_2</i>
+                <div class="summary-title">Total Stok Fisik</div>
+                <div class="summary-value">{{ total_physical_stock|intcomma }}</div>
+                <div class="mt-2 small opacity-75">Dari {{ total_items }} varian produk aktif</div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="summary-card bg-grad-primary">
+                <i class="material-icons">account_balance_wallet</i>
+                <div class="summary-title">Total Nilai Aset (Modal)</div>
+                <div class="summary-value">Rp {{ total_asset_value|intcomma }}</div>
+                <div class="mt-2 small opacity-75">Stok × Harga Modal</div>
+            </div>
+        </div>
+        <div class="col-md-4 pr-0 mb-3">
+            <div class="summary-card bg-grad-success">
+                <i class="material-icons">trending_up</i>
+                <div class="summary-title">Total Potensi Pendapatan</div>
+                <div class="summary-value">Rp {{ total_potential_revenue|intcomma }}</div>
+                <div class="mt-2 small opacity-75">Stok × Harga Jual</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12 mt-2">
+    <div class="fresh-card w-100">
+        <div class="table-responsive">
+            <table class="fresh-table" id="report-table">
+                <thead>
+                    <tr>
+                        <th>Kategori / Merek</th>
+                        <th>Kode / SKU</th>
+                        <th>Nama Produk</th>
+                        <th class="text-center">Sisa Stok</th>
+                        <th class="text-end">Harga Modal</th>
+                        <th class="text-end">Harga Jual</th>
+                        <th class="text-end">Nilai Aset</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in report_data %}
+                    <tr>
+                        <td><span class="badge bg-light text-dark border">{{ row.product.category_id.name }}</span></td>
+                        <td class="text-muted" style="font-family:monospace;">{{ row.product.code }}</td>
+                        <td class="fw-bold text-dark">{{ row.product.name }}</td>
+                        <td class="text-center fw-bold {% if row.product.stock <= 5 %}text-danger{% else %}text-success{% endif %}">
+                            {{ row.product.stock }}
+                        </td>
+                        <td class="text-end text-muted">Rp {{ row.product.buy_price|intcomma }}</td>
+                        <td class="text-end fw-bold text-primary">Rp {{ row.product.price|intcomma }}</td>
+                        <td class="text-end fw-bold text-dark">Rp {{ row.asset_value|intcomma }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">Belum ada data produk aktif.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function() {
+        if ($('#report-table tbody tr').length > 1) {
+            $('#report-table').DataTable({
+                "pageLength": 50,
+                "lengthMenu": [10, 25, 50, 100, -1],
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/id.json"
+                }
+            });
+        }
+    });
+</script>
+{% endblock pageContent %}

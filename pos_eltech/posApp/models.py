@@ -61,6 +61,7 @@ class Products(models.Model):
     name = models.CharField(max_length=30)
     description = models.TextField()
     price = models.FloatField(default=0)
+    buy_price = models.FloatField(default=0)
     status = models.IntegerField(default=1) 
     
     # ==========================================

@@ -183,3 +183,15 @@ Semua modul di bawah ini sudah **selesai** dan berfungsi:
 - [x] Tambah fungsi `inventory_edit_masuk` di `views.py` (Koreksi stok + selisih)
 - [x] Tambah fungsi `inventory_delete_masuk` di `views.py` (Koreksi kembalikan stok)
 - [x] Daftarkan rute di `urls.py`
+
+---
+
+### J. Fitur Laporan Inventory & Nilai Aset
+
+- [x] Tambah kolom `buy_price` di model `Products` dan jalankan migrasi
+- [x] Perbarui form `manage_product.html` untuk menyimpan field `buy_price`
+- [x] Perbarui fungsi `save_product` di `views.py` untuk mengakomodasi `buy_price`
+- [x] Buat view `inventory_report` di `views.py` yang menghitung total stok, aset, dan potensi penjualan
+- [x] Buat template UI `inventory_report.html` dengan desain kartu yang segar dan tabel responsif
+- [x] Daftarkan endpoint `inventory/report` di `urls.py`
+- [x] Tambahkan tombol **Laporan Aset** di halaman utama Inventory

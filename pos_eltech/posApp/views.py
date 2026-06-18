@@ -434,6 +434,9 @@ def save_product(request):
             
             warranty_input = data.get('warranty', 0)
             if warranty_input == '': warranty_input = 0
+            
+            buy_price_input = data.get('buy_price', 0)
+            if buy_price_input == '': buy_price_input = 0
             # ==========================================
 
             if id.isnumeric() and int(id) > 0 :
@@ -444,6 +447,7 @@ def save_product(request):
                 prod.name = data['name']
                 prod.description = data['description']
                 prod.price = float(data['price'])
+                prod.buy_price = float(buy_price_input)
                 prod.status = data['status']
                 
                 # Masukkan data aman
@@ -461,6 +465,7 @@ def save_product(request):
                     name=data['name'], 
                     description=data['description'], 
                     price=float(data['price']),
+                    buy_price=float(buy_price_input),
                     status=data['status'],
                     stock=int(stock_input),
                     warranty=int(warranty_input)
@@ -940,3 +945,44 @@ def inventory_delete_masuk(request):
         resp['msg'] = str(e)
         print("Unexpected error:", sys.exc_info()[0])
     return HttpResponse(json.dumps(resp), content_type="application/json")
+
+@login_required
+@user_passes_test(is_admin, login_url='/')
+def inventory_report(request):
+    products = Products.objects.filter(status=1).order_by('category_id__name', 'name')
+    
+    total_items = 0
+    total_physical_stock = 0
+    total_asset_value = 0
+    total_potential_revenue = 0
+    
+    report_data = []
+    
+    for p in products:
+        stock = p.stock or 0
+        buy_price = p.buy_price or 0
+        sell_price = p.price or 0
+        
+        asset_value = stock * buy_price
+        potential_revenue = stock * sell_price
+        
+        total_items += 1
+        total_physical_stock += stock
+        total_asset_value += asset_value
+        total_potential_revenue += potential_revenue
+        
+        report_data.append({
+            'product': p,
+            'asset_value': asset_value,
+            'potential_revenue': potential_revenue
+        })
+        
+    context = {
+        'page_title': 'Laporan & Nilai Aset',
+        'report_data': report_data,
+        'total_items': total_items,
+        'total_physical_stock': total_physical_stock,
+        'total_asset_value': total_asset_value,
+        'total_potential_revenue': total_potential_revenue
+    }
+    return render(request, 'posApp/inventory_report.html', context)

@@ -169,6 +169,9 @@
         </div>
         {% if user.is_superuser %}
         <div class="d-flex gap-2">
+            <a href="{% url 'inventory-report' %}" class="btn btn-info rounded-pill px-4 shadow-sm border-0 d-flex align-items-center text-white" style="background: var(--grad-primary, #4facfe); font-weight: 600;">
+                <i class="material-icons align-middle me-1">analytics</i> Laporan Aset
+            </a>
             <a href="{% url 'inventory-add' %}" class="btn btn-primary rounded-pill px-4 shadow-sm border-0 d-flex align-items-center" style="background: var(--grad-success); font-weight: 600;">
                 <i class="material-icons align-middle me-1">add_circle</i> Tambah Stok
             </a>

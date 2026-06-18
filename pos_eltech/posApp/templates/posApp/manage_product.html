@@ -177,9 +177,10 @@
     .pf-row-2  { grid-template-columns: 1fr 1fr; }
     .pf-row-3  { grid-template-columns: 1fr 1fr 1fr; }
     .pf-row-4  { grid-template-columns: 1fr 1fr 1fr 1fr; }
+    .pf-row-5  { grid-template-columns: 1fr 1fr 1fr 1fr 1fr; }
     .pf-row-53 { grid-template-columns: 5fr 7fr; }
     @media (max-width: 600px) {
-        .pf-row-2, .pf-row-3, .pf-row-4, .pf-row-53 { grid-template-columns: 1fr; }
+        .pf-row-2, .pf-row-3, .pf-row-4, .pf-row-5, .pf-row-53 { grid-template-columns: 1fr; }
     }
 
     /* ---------- PHOTO + IDENTITY SIDE BY SIDE ---------- */
@@ -337,7 +338,14 @@
                 Harga, Stok &amp; Status
             </div>
 
-            <div class="pf-row pf-row-4">
+            <div class="pf-row pf-row-5">
+                <div class="pf-field">
+                    <label for="buy_price" class="pf-label" style="color:var(--clr-label);">Harga Modal</label>
+                    <input type="number" step="0.01" name="buy_price" id="buy_price"
+                           class="pf-control is-mono"
+                           value="{% if product.buy_price %}{{product.buy_price|unlocalize}}{% else %}0{% endif %}"
+                           required placeholder="0">
+                </div>
                 <div class="pf-field">
                     <label for="price" class="pf-label" style="color:var(--clr-danger);">Harga Jual</label>
                     <input type="number" step="0.01" name="price" id="price"
