@@ -75,6 +75,14 @@ class Products(models.Model):
     # TAMBAHAN KOLOM GARANSI (ANTI-ERROR)
     # ==========================================
     warranty = models.IntegerField(default=0, null=True, blank=True) 
+    
+    CONDITION_CHOICES = [
+        ('BARU', 'Baru'),
+        ('BEKAS_A', 'Bekas Grade A'),
+        ('BEKAS_B', 'Bekas Grade B'),
+        ('RUSAK', 'Rusak/Minus'),
+    ]
+    condition = models.CharField(max_length=20, choices=CONDITION_CHOICES, default='BARU')
     # ==========================================
 
     date_added = models.DateTimeField(default=timezone.now) 
@@ -130,7 +138,7 @@ class salesItems(models.Model):
     sale_id = models.ForeignKey(Sales,on_delete=models.CASCADE)
     product_id = models.ForeignKey(Products,on_delete=models.CASCADE)
     price = models.FloatField(default=0)
-    qty = models.FloatField(default=0)
+    qty = models.IntegerField(default=0)
     total = models.FloatField(default=0)
 
     class Meta:

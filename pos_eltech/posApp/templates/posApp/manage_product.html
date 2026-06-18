@@ -338,7 +338,7 @@
                 Harga, Stok &amp; Status
             </div>
 
-            <div class="pf-row pf-row-5">
+            <div class="pf-row pf-row-3" style="margin-bottom: 12px;">
                 <div class="pf-field">
                     <label for="buy_price" class="pf-label" style="color:var(--clr-label);">Harga Modal</label>
                     <input type="number" step="0.01" name="buy_price" id="buy_price"
@@ -360,12 +360,23 @@
                            value="{% if product.stock %}{{product.stock}}{% else %}0{% endif %}"
                            required placeholder="0">
                 </div>
+            </div>
+            <div class="pf-row pf-row-3">
                 <div class="pf-field">
-                    <label for="warranty" class="pf-label" style="color:var(--clr-success);">Garansi</label>
+                    <label for="warranty" class="pf-label" style="color:var(--clr-success);">Garansi (Hari)</label>
                     <input type="number" name="warranty" id="warranty"
                            class="pf-control is-mono clr-success"
                            value="{% if product.warranty %}{{product.warranty}}{% else %}0{% endif %}"
                            required placeholder="0">
+                </div>
+                <div class="pf-field">
+                    <label for="condition" class="pf-label" style="color:var(--clr-primary);">Kondisi Barang</label>
+                    <select name="condition" id="condition" class="pf-control" required>
+                        <option value="BARU" {% if product.condition == 'BARU' or not product.condition %}selected{% endif %}>Baru</option>
+                        <option value="BEKAS_A" {% if product.condition == 'BEKAS_A' %}selected{% endif %}>Bekas Grade A</option>
+                        <option value="BEKAS_B" {% if product.condition == 'BEKAS_B' %}selected{% endif %}>Bekas Grade B</option>
+                        <option value="RUSAK" {% if product.condition == 'RUSAK' %}selected{% endif %}>Rusak/Minus</option>
+                    </select>
                 </div>
                 <div class="pf-field">
                     <label for="status" class="pf-label">Status</label>

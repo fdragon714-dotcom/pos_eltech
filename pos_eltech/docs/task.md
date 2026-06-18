@@ -204,37 +204,37 @@ Semua modul di bawah ini sudah **selesai** dan berfungsi:
 
 #### 🔴 Prioritas Tinggi (Kritis)
 
-- [ ] **[BUG] `buy_price` di form Inventory Add tidak mengupdate `product.buy_price`**
+- [x] **[BUG] `buy_price` di form Inventory Add tidak mengupdate `product.buy_price`**
   - Saat tambah stok masuk dan isi harga beli, nilai hanya masuk ke `InventoryLog.buy_price`, bukan ke `Products.buy_price`
   - Akibat: Laporan Nilai Aset tidak akurat (pakai harga lama)
   - Fix: Tambahkan `product.buy_price = float(buy_price)` sebelum `product.save()` di fungsi `inventory_add`
 
-- [ ] **[BUG] Edit Produk bisa mengubah stok tanpa mencatat log Inventory**
+- [x] **[BUG] Edit Produk bisa mengubah stok tanpa mencatat log Inventory**
   - Di fungsi `save_product`, saat UPDATE, stok langsung di-set tanpa membuat `InventoryLog`
   - Akibat: Perubahan stok tidak terlacak, Inventory jadi tidak akurat
   - Fix: Pisahkan form edit stok dari form edit produk, atau buat log PENYESUAIAN otomatis jika stok berubah
 
-- [ ] **[BUG] Hapus Log MASUK bisa membuat stok produk menjadi negatif**
+- [x] **[BUG] Hapus Log MASUK bisa membuat stok produk menjadi negatif**
   - Tidak ada validasi `product.stock >= qty_to_revert` sebelum mengurangi stok
   - Fix: Tambahkan pengecekan di fungsi `inventory_delete_masuk`
 
 #### 🟡 Prioritas Sedang
 
-- [ ] **[RISIKO] Race condition saat dua kasir checkout barengan**
+- [x] **[RISIKO] Race condition saat dua kasir checkout barengan**
   - Validasi stok dan pengurangan stok tidak dalam satu database transaction
   - Fix: Gunakan `select_for_update()` + `transaction.atomic()` di fungsi `save_pos`
 
-- [ ] **[BUG] Hapus Produk menghapus riwayat transaksi secara permanen (CASCADE)**
+- [x] **[BUG] Hapus Produk menghapus riwayat transaksi secara permanen (CASCADE)**
   - Fix: Ubah fungsi `delete_product` agar hanya menonaktifkan produk (`status=0`) bukan menghapusnya
   - Tambahkan pengecekan: tolak jika produk masih punya riwayat transaksi
 
 #### 🟢 Peningkatan Khusus Toko Komputer Second
 
-- [ ] **[FITUR] Tambahkan field Kondisi Barang pada model `Products`**
+- [x] **[FITUR] Tambahkan field Kondisi Barang pada model `Products`**
   - Toko komputer second perlu bisa membedakan kondisi barang: Baru, Bekas Grade A, Bekas Grade B
   - Tambahkan `condition = CharField(choices=...)` di model + migrasi
 
-- [ ] **[PENINGKATAN] Ubah `salesItems.qty` dari `FloatField` ke `IntegerField`**
+- [x] **[PENINGKATAN] Ubah `salesItems.qty` dari `FloatField` ke `IntegerField`**
   - Barang komputer second selalu dalam satuan unit (bilangan bulat)
   - `FloatField` bisa menyebabkan ketidakpresisian floating point di perhitungan stok
 

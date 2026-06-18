@@ -9,6 +9,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 import json, sys, calendar
 from datetime import date, datetime, timedelta
+from django.db import transaction
 
 # ==========================================
 # SATPAM PENGECEK HAK AKSES (HANYA BOS)
@@ -442,6 +443,12 @@ def save_product(request):
             if id.isnumeric() and int(id) > 0 :
                 # MODE UPDATE
                 prod = Products.objects.filter(id=id).first()
+                
+                # Check if stock changed to create log
+                stock_input_val = int(stock_input)
+                stock_diff = stock_input_val - (prod.stock or 0)
+                stock_before = prod.stock or 0
+                
                 prod.code = data['code']
                 prod.category_id = category
                 prod.name = data['name']
@@ -449,14 +456,27 @@ def save_product(request):
                 prod.price = float(data['price'])
                 prod.buy_price = float(buy_price_input)
                 prod.status = data['status']
+                prod.condition = data.get('condition', 'BARU')
                 
                 # Masukkan data aman
-                prod.stock = int(stock_input)
+                prod.stock = stock_input_val
                 prod.warranty = int(warranty_input)
                 
                 if 'image' in files:
                     prod.image = files['image']
                 prod.save()
+                
+                # Create PENYESUAIAN log if stock was changed manually in edit form
+                if stock_diff != 0:
+                    InventoryLog(
+                        product=prod,
+                        movement_type='PENYESUAIAN',
+                        quantity_change=stock_diff,
+                        stock_before=stock_before,
+                        stock_after=prod.stock,
+                        note='Update otomatis via form Edit Produk',
+                        recorded_by=request.user
+                    ).save()
             else:
                 # MODE TAMBAH BARU
                 prod = Products(
@@ -467,6 +487,7 @@ def save_product(request):
                     price=float(data['price']),
                     buy_price=float(buy_price_input),
                     status=data['status'],
+                    condition=data.get('condition', 'BARU'),
                     stock=int(stock_input),
                     warranty=int(warranty_input)
                 )
@@ -487,10 +508,25 @@ def delete_product(request):
     data =  request.POST
     resp = {'status':''}
     try:
-        Products.objects.filter(id = data['id']).delete()
-        resp['status'] = 'success'
-    except:
+        product = Products.objects.filter(id=data['id']).first()
+        if product:
+            # Cegah hapus permanen jika sudah ada riwayat transaksi
+            has_sales = salesItems.objects.filter(product_id=product).exists()
+            has_logs = InventoryLog.objects.filter(product=product).exists()
+            
+            if has_sales or has_logs:
+                product.status = 0 # Soft delete
+                product.save()
+                resp['status'] = 'success'
+            else:
+                product.delete()
+                resp['status'] = 'success'
+        else:
+            resp['status'] = 'failed'
+            resp['msg'] = 'Produk tidak ditemukan.'
+    except Exception as e:
         resp['status'] = 'failed'
+        resp['msg'] = str(e)
     return HttpResponse(json.dumps(resp), content_type="application/json")
 
 
@@ -540,82 +576,83 @@ def save_pos(request):
     code = str(pref) + str(code)
 
     try:
-        # ==========================================
-        # VALIDASI STOK
-        # ==========================================
-        idx = 0
-        for prod in data.getlist('product_id[]'):
-            product_id = prod
-            qty = data.getlist('qty[]')[idx]
-            product = Products.objects.filter(id=product_id).first()
-            if product:
-                if product.stock - int(float(qty)) < 0:
-                    resp['msg'] = f"Stok {product.name} tidak cukup."
-                    return HttpResponse(json.dumps(resp), content_type="application/json")
-            idx += 1
+        with transaction.atomic():
+            # ==========================================
+            # VALIDASI STOK (MENGHINDARI RACE CONDITION)
+            # ==========================================
+            idx = 0
+            for prod in data.getlist('product_id[]'):
+                product_id = prod
+                qty = data.getlist('qty[]')[idx]
+                product = Products.objects.select_for_update().filter(id=product_id).first()
+                if product:
+                    if product.stock - int(float(qty)) < 0:
+                        resp['msg'] = f"Stok {product.name} tidak cukup."
+                        return HttpResponse(json.dumps(resp), content_type="application/json")
+                idx += 1
 
-        payment = data.get('payment_method', 'Tunai')
-        
-        grand_total_val = float(data.get('grand_total', 0))
-        tendered_amount_val = float(data.get('tendered_amount', 0))
-        amount_change_val = float(data.get('amount_change', 0))
-
-        if payment.lower() == 'qris':
-            tendered_amount_val = grand_total_val
-            amount_change_val = 0.0 
-
-        # ==========================================
-        # PENYIMPANAN DATA SALES (TERMASUK CUSTOMER)
-        # ==========================================
-        sales = Sales(
-            code=code, 
-            sub_total=data.get('sub_total', 0), 
-            diskon=data.get('diskon', 0), 
-            diskon_amount=data.get('diskon_amount', 0), 
-            grand_total=grand_total_val, 
-            tendered_amount=tendered_amount_val, 
-            amount_change=amount_change_val,     
-            payment_method=payment,
-            # TANGKAP DATA PELANGGAN DARI FORM HTML
-            customer_name=data.get('customer_name', ''),
-            customer_wa=data.get('customer_wa', ''),
-            customer_address=data.get('customer_address', ''),
-            # KASIR YANG MEMPROSES
-            cashier=request.user
-        )
-        sales.save()
-        sale_id = sales.pk
-        
-        i = 0
-        for prod in data.getlist('product_id[]'):
-            product_id = prod 
-            sale = Sales.objects.filter(id=sale_id).first()
-            product = Products.objects.filter(id=product_id).first()
-            qty = data.getlist('qty[]')[i] 
-            price = data.getlist('price[]')[i] 
-            total = float(qty) * float(price)
+            payment = data.get('payment_method', 'Tunai')
             
-            if product:
-                stock_before = product.stock
-                product.stock = product.stock - int(float(qty))
-                product.save()
+            grand_total_val = float(data.get('grand_total', 0))
+            tendered_amount_val = float(data.get('tendered_amount', 0))
+            amount_change_val = float(data.get('amount_change', 0))
 
-                InventoryLog(
-                    product=product,
-                    movement_type="KELUAR",
-                    quantity_change=-int(float(qty)),
-                    stock_before=stock_before,
-                    stock_after=product.stock,
-                    reference_code=code,
-                    note="Terjual via POS",
-                    recorded_by=request.user
-                ).save()
+            if payment.lower() == 'qris':
+                tendered_amount_val = grand_total_val
+                amount_change_val = 0.0 
 
-            salesItems(sale_id = sale, product_id = product, qty = qty, price = price, total = total).save()
-            i += int(1)
+            # ==========================================
+            # PENYIMPANAN DATA SALES (TERMASUK CUSTOMER)
+            # ==========================================
+            sales = Sales(
+                code=code, 
+                sub_total=data.get('sub_total', 0), 
+                diskon=data.get('diskon', 0), 
+                diskon_amount=data.get('diskon_amount', 0), 
+                grand_total=grand_total_val, 
+                tendered_amount=tendered_amount_val, 
+                amount_change=amount_change_val,     
+                payment_method=payment,
+                # TANGKAP DATA PELANGGAN DARI FORM HTML
+                customer_name=data.get('customer_name', ''),
+                customer_wa=data.get('customer_wa', ''),
+                customer_address=data.get('customer_address', ''),
+                # KASIR YANG MEMPROSES
+                cashier=request.user
+            )
+            sales.save()
+            sale_id = sales.pk
             
-        resp['status'] = 'success'
-        resp['sale_id'] = sale_id
+            i = 0
+            for prod in data.getlist('product_id[]'):
+                product_id = prod 
+                sale = Sales.objects.filter(id=sale_id).first()
+                product = Products.objects.filter(id=product_id).first()
+                qty = data.getlist('qty[]')[i] 
+                price = data.getlist('price[]')[i] 
+                total = float(qty) * float(price)
+                
+                if product:
+                    stock_before = product.stock
+                    product.stock = product.stock - int(float(qty))
+                    product.save()
+
+                    InventoryLog(
+                        product=product,
+                        movement_type="KELUAR",
+                        quantity_change=-int(float(qty)),
+                        stock_before=stock_before,
+                        stock_after=product.stock,
+                        reference_code=code,
+                        note="Terjual via POS",
+                        recorded_by=request.user
+                    ).save()
+
+                salesItems(sale_id = sale, product_id = product, qty = qty, price = price, total = total).save()
+                i += int(1)
+                
+            resp['status'] = 'success'
+            resp['sale_id'] = sale_id
         
     except Exception as e:
         resp['msg'] = "An error occured: " + str(e)
@@ -794,6 +831,11 @@ def inventory_add(request):
             if product and qty > 0:
                 stock_before = product.stock
                 product.stock += qty
+                
+                # Update Harga Beli
+                if buy_price and float(buy_price) > 0:
+                    product.buy_price = float(buy_price)
+                    
                 product.save()
                 
                 InventoryLog(
@@ -933,6 +975,12 @@ def inventory_delete_masuk(request):
         if log:
             qty_to_revert = log.quantity_change
             product = log.product
+            
+            # Validasi agar stok tidak menjadi negatif
+            if product.stock - qty_to_revert < 0:
+                resp['msg'] = 'Tidak bisa menghapus log ini karena stok saat ini tidak mencukupi.'
+                return HttpResponse(json.dumps(resp), content_type="application/json")
+                
             product.stock -= qty_to_revert
             product.save()
             
