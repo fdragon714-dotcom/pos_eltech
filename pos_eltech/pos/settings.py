@@ -217,7 +217,7 @@ UNFOLD = {
                     },
                     {
                         "title": "Log Inventory",
-                        "icon": "inventory",
+                        "icon": "archive",
                         "link": reverse_lazy("admin:posApp_inventorylog_changelist"),
                     },
                 ],
