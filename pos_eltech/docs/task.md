@@ -173,3 +173,13 @@ Semua modul di bawah ini sudah **selesai** dan berfungsi:
 6. **E** — Buat semua template baru
 7. **F** — Tambah menu navigasi sidebar
 8. **G** — Register ke Django Admin
+
+---
+
+### I. Tambahan Fitur Edit Stok Masuk (Berdasarkan Permintaan User)
+
+- [x] Tambah tombol Edit & Delete pada `inventory.html` khusus baris `MASUK`
+- [x] Buat modal UI edit: `inventory_edit_masuk.html`
+- [x] Tambah fungsi `inventory_edit_masuk` di `views.py` (Koreksi stok + selisih)
+- [x] Tambah fungsi `inventory_delete_masuk` di `views.py` (Koreksi kembalikan stok)
+- [x] Daftarkan rute di `urls.py`

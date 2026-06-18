@@ -1,0 +1,81 @@
+<div class="container-fluid">
+    <form action="" id="inventory-edit-masuk-form">
+        <input type="hidden" name="id" value="{{ log.id }}">
+        
+        <div class="alert alert-warning py-2 small">
+            <i class="material-icons align-middle" style="font-size:16px;">info</i> 
+            Sisa stok saat ini akan dikoreksi berdasarkan selisih angka lama dan baru. Riwayat di bawah ini tidak akan ikut dihitung ulang.
+        </div>
+
+        <div class="form-group mb-3">
+            <label class="control-label">Produk</label>
+            <input type="text" class="form-control form-control-sm" value="{{ log.product.code }} - {{ log.product.name }}" readonly>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 form-group mb-3">
+                <label class="control-label">Jml Masuk (Lama)</label>
+                <input type="number" class="form-control form-control-sm text-center" value="{{ log.quantity_change }}" readonly>
+            </div>
+            
+            <div class="col-md-6 form-group mb-3">
+                <label class="control-label">Jml Masuk (Baru) <span class="text-danger">*</span></label>
+                <input type="number" name="new_qty" id="new_qty" class="form-control form-control-sm text-center font-weight-bold text-success" min="1" value="{{ log.quantity_change }}" required>
+            </div>
+        </div>
+
+        <div class="form-group mb-3">
+            <label class="control-label text-muted small">Catatan (Lama)</label>
+            <p class="mb-1 small bg-light p-2 rounded border">{{ log.note }}</p>
+            <label class="control-label">Catatan Tambahan (Opsional)</label>
+            <input type="text" name="note" class="form-control form-control-sm" placeholder="Contoh: Koreksi salah ketik stok faktur 001">
+        </div>
+    </form>
+</div>
+
+<script>
+    $(function() {
+        $('#inventory-edit-masuk-form').submit(function(e) {
+            e.preventDefault();
+            var _this = $(this)
+            $('.err-msg').remove();
+            var el = $('<div>')
+            el.addClass("alert alert-danger err-msg")
+            el.hide()
+            if (_this[0].checkValidity() == false) {
+                _this[0].reportValidity();
+                return false;
+            }
+            start_loader();
+            $.ajax({
+                headers: { "X-CSRFToken": '{{csrf_token}}' },
+                url: "{% url 'inventory-edit-masuk' %}",
+                data: new FormData($(this)[0]),
+                cache: false,
+                contentType: false,
+                processData: false,
+                method: 'POST',
+                type: 'POST',
+                dataType: 'json',
+                error: err => {
+                    console.log(err)
+                    alert_toast("An error occured", 'error');
+                    end_loader();
+                },
+                success: function(resp) {
+                    if (typeof resp == 'object' && resp.status == 'success') {
+                        location.reload();
+                    } else if (resp.status == 'failed' && !!resp.msg) {
+                        el.text(resp.msg)
+                        _this.prepend(el)
+                        el.show('slow')
+                        $("html, body, .modal").scrollTop(0);
+                    } else {
+                        alert_toast("An error occured", 'error');
+                    }
+                    end_loader()
+                }
+            })
+        })
+    })
+</script>

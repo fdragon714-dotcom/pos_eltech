@@ -35,6 +35,8 @@ urlpatterns = [
     path('inventory/adjust', views.inventory_adjust, name='inventory-adjust'),
     path('inventory/product/<int:id>', views.inventory_product, name='inventory-product'),
     path('inventory/low-stock', views.inventory_low_stock, name='inventory-low-stock'),
+    path('inventory/edit-masuk', views.inventory_edit_masuk, name='inventory-edit-masuk'),
+    path('inventory/delete-masuk', views.inventory_delete_masuk, name='inventory-delete-masuk'),
     
     # path('employees', views.employees, name="employee-page"),
     # path('manage_employees', views.manage_employees, name="manage_employees-page"),

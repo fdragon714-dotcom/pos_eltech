@@ -265,6 +265,9 @@
                         <th class="text-center">Sisa Stok</th>
                         <th>Keterangan</th>
                         <th class="text-center">Oleh</th>
+                        {% if request.user.is_superuser %}
+                        <th class="text-center">Aksi</th>
+                        {% endif %}
                     </tr>
                 </thead>
                 <tbody>
@@ -301,10 +304,24 @@
                         <td class="text-center">
                             <span class="bg-light px-2 py-1 rounded text-dark small fw-bold">{{ log.recorded_by.username|default:"Sistem" }}</span>
                         </td>
+                        {% if request.user.is_superuser %}
+                        <td class="text-center">
+                            {% if log.movement_type == 'MASUK' %}
+                            <button class="btn btn-sm btn-outline-primary rounded-circle edit-masuk" data-id="{{ log.id }}" title="Edit Stok Masuk">
+                                <i class="material-icons" style="font-size:16px; padding-top: 2px;">edit</i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger rounded-circle delete-masuk" data-id="{{ log.id }}" title="Hapus Stok Masuk">
+                                <i class="material-icons" style="font-size:16px; padding-top: 2px;">delete</i>
+                            </button>
+                            {% else %}
+                            <span class="text-muted small">—</span>
+                            {% endif %}
+                        </td>
+                        {% endif %}
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="7" class="text-center py-5 text-muted">
+                        <td colspan="{% if request.user.is_superuser %}8{% else %}7{% endif %}" class="text-center py-5 text-muted">
                             <i class="material-icons d-block mb-2" style="font-size:40px; color:#d8e2ef;">inventory_2</i>
                             Belum ada pergerakan stok yang tercatat.
                         </td>
@@ -316,3 +333,46 @@
     </div>
 </div>
 {% endblock pageContent %}
+
+{% block ScriptBlock %}
+<script>
+    $(function() {
+        $('.edit-masuk').click(function() {
+            uni_modal("Edit Stok Masuk", "{% url 'inventory-edit-masuk' %}?id=" + $(this).attr('data-id'))
+        });
+
+        $('.delete-masuk').click(function() {
+            let id = $(this).attr('data-id');
+            Swal.fire({
+                title: 'Hapus Riwayat Ini?',
+                text: "Sisa stok produk akan dikurangi secara otomatis. Anda yakin?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, Hapus!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    start_loader();
+                    $.ajax({
+                        headers: { "X-CSRFToken": '{{csrf_token}}' },
+                        url: "{% url 'inventory-delete-masuk' %}",
+                        method: "POST",
+                        data: { id: id },
+                        dataType: "json",
+                        success: function(resp) {
+                            if (resp.status == 'success') {
+                                location.reload();
+                            } else {
+                                Swal.fire("Error", resp.msg, "error");
+                                end_loader();
+                            }
+                        }
+                    });
+                }
+            });
+        });
+    });
+</script>
+{% endblock ScriptBlock %}

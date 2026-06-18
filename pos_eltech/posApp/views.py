@@ -874,3 +874,69 @@ def inventory_low_stock(request):
         'products': products
     }
     return render(request, 'posApp/inventory_low_stock.html', context)
+
+@login_required
+@user_passes_test(is_admin, login_url='/')
+def inventory_edit_masuk(request):
+    if request.method == 'POST':
+        resp = {'status':'failed', 'msg':''}
+        try:
+            log_id = request.POST.get('id')
+            new_qty = int(request.POST.get('new_qty', 0))
+            note = request.POST.get('note', '')
+            
+            log = InventoryLog.objects.filter(id=log_id, movement_type='MASUK').first()
+            if log and new_qty > 0:
+                old_qty = log.quantity_change
+                diff = new_qty - old_qty
+                
+                # Update current stock
+                product = log.product
+                product.stock += diff
+                product.save()
+                
+                # Update log
+                log.quantity_change = new_qty
+                if note:
+                    log.note = f"{log.note} | Edit: {note}"
+                log.save()
+                
+                resp['status'] = 'success'
+                messages.success(request, 'Data stok masuk berhasil diperbarui.')
+            else:
+                resp['msg'] = 'Log stok masuk tidak ditemukan atau jumlah tidak valid.'
+        except Exception as e:
+            resp['msg'] = str(e)
+            print("Unexpected error:", sys.exc_info()[0])
+        return HttpResponse(json.dumps(resp), content_type="application/json")
+        
+    log_id = request.GET.get('id')
+    log = InventoryLog.objects.filter(id=log_id, movement_type='MASUK').first()
+    context = {
+        'log': log
+    }
+    return render(request, 'posApp/inventory_edit_masuk.html', context)
+
+@login_required
+@user_passes_test(is_admin, login_url='/')
+def inventory_delete_masuk(request):
+    resp = {'status':'failed', 'msg':''}
+    try:
+        log_id = request.POST.get('id')
+        log = InventoryLog.objects.filter(id=log_id, movement_type='MASUK').first()
+        
+        if log:
+            qty_to_revert = log.quantity_change
+            product = log.product
+            product.stock -= qty_to_revert
+            product.save()
+            
+            log.delete()
+            resp['status'] = 'success'
+            messages.success(request, 'Riwayat stok masuk berhasil dihapus dan stok telah disesuaikan.')
+        else:
+            resp['msg'] = 'Data riwayat tidak ditemukan.'
+    except Exception as e:
+        resp['msg'] = str(e)
+        print("Unexpected error:", sys.exc_info()[0])
+    return HttpResponse(json.dumps(resp), content_type="application/json")
